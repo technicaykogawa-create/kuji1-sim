@@ -46,6 +46,10 @@
   #info.hide { display: none; }
   .red { color: #b3261e; }
   .note { color: #6b7280; font-size: 11px; margin-top: 6px; }
+  #pad { position: absolute; left: 12px; bottom: 110px; display: none; grid-template-columns: repeat(3, 64px); gap: 5px; padding: 8px; z-index: 5; user-select: none; -webkit-user-select: none; touch-action: none; }
+  #pad button { height: 46px; padding: 0; font-size: 12px; touch-action: none; }
+  #pad button.hold { background: #1f2f4f; color: #fff; }
+  #pad .cap { grid-column: 1 / 4; font-size: 11px; color: #6b7280; text-align: center; }
   .lbl { font-size: 9px; line-height: 1.25; background: rgba(255,255,255,.8); border: 1px solid #b6bcc6; color: #1f2937; padding: 0 3px; border-radius: 2px; white-space: nowrap; pointer-events: none; }
   .lbl.crane { border-color: #1f2f4f; color: #1f2f4f; font-weight: 600; }
   .lbl.warn { border-color: #b3261e; color: #b3261e; }
@@ -65,6 +69,7 @@
     #step .t { font-size: 13px; } #step .d { font-size: 11px; } #step .s { display: none; }
     #tl { left: 6px; right: auto; width: calc(100vw - 12px); box-sizing: border-box; bottom: 6px; } #months { font-size: 9px; }
     .lbl { font-size: 8px; padding: 0 2px; }
+    #pad { left: 6px; right: auto; width: auto; bottom: 118px; grid-template-columns: repeat(3, 54px); gap: 4px; padding: 6px; } #pad button { height: 42px; font-size: 11px; }
   }
 </style>
 </head>
@@ -89,12 +94,19 @@
     <button data-view="all">全体</button>
     <button data-view="top">真上</button>
     <button data-view="op">運転席</button>
-    <button id="labelsBtn">名前を隠す</button>
+    <button data-view="walk">歩いて見る</button>
+    <button id="labelsBtn">名前を出す</button>
     <button id="infoBtn">説明を隠す</button>
     <button id="tlBtn">工程バーを出す</button>
   </div>
 </div>
 
+<div id="pad" class="panel">
+  <div class="cap">作業員の目の高さ（1.6m）で歩く。画面をなぞると向きが変わる</div>
+  <button data-mv="lookup">見上げる</button><button data-mv="fwd">前へ</button><button data-mv="lookdn">見下ろす</button>
+  <button data-mv="turnL">左を向く</button><button data-mv="back">後ろへ</button><button data-mv="turnR">右を向く</button>
+  <button data-mv="left">左へ</button><button id="padSpeed">歩く</button><button data-mv="right">右へ</button>
+</div>
 <div id="now" class="panel"><div class="date" id="dateT">2026年7月17日（金）</div><div class="stage" id="stageT">準備工</div></div>
 
 <div id="info" class="panel">
@@ -1203,7 +1215,7 @@ S({ date: '2026-10-31', stage: '建方', t: '250t クレーン解体・搬出', 
 // ===================================================================================
 // 再生
 // ===================================================================================
-let idx = 0, tt = 0, playing = true, speed = 2, autoCam = true, labelsOn = true, view = '';
+let idx = 0, tt = 0, playing = true, speed = 2, autoCam = true, labelsOn = false, view = '';
 const WD = '日月火水木金土';
 function fmtDate(d) { const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/); if (!m) { const k = d.match(/^(\d{4})-(\d{2})-(.+)$/); return k ? k[1] + '年' + (+k[2]) + '月' + k[3] : d.replace(/^(\d{4})-/, '$1年'); } const dt = new Date(+m[1], +m[2] - 1, +m[3]); return m[1] + '年' + (+m[2]) + '月' + (+m[3]) + '日（' + WD[dt.getDay()] + '）'; }
 const dateText = s => s.dateEnd ? fmtDate(s.date) + ' 〜 ' + fmtDate(s.dateEnd).replace(/^\d{4}年/, '') : fmtDate(s.date);
@@ -1241,8 +1253,40 @@ document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => {
   setAuto(false); view = b.dataset.view; document.querySelectorAll('[data-view]').forEach(x => x.classList.toggle('on', x === b));
   if (view === 'all') { camera.position.set(-66, 46, -16); controls.target.set(2, 12, 4); }
   if (view === 'top') { camera.position.set(-1, 110, 4.5); controls.target.set(-1, 0, 4); }
-  controls.enabled = view !== 'op';
+  if (view === 'walk') startWalk();
+  controls.enabled = view !== 'op' && view !== 'walk';
 });
+// 歩いて見る: 作業員と同じ目の高さ・歩く速さで動く（2026-10-18 小川さん）
+const EYE = 1.6, walk = { yaw: 0, pitch: 0, fast: false, keys: new Set() };
+function startWalk() {
+  const p = W(-14, -18, EYE), look = W(0, 0, 6); camera.position.copy(p);
+  walk.yaw = Math.atan2(-(look.x - p.x), -(look.z - p.z)); walk.pitch = Math.atan2(look.y - p.y, Math.hypot(look.x - p.x, look.z - p.z));
+}
+const pad = document.getElementById('pad');
+pad.querySelectorAll('[data-mv]').forEach(b => {
+  const on = e => { e.preventDefault(); walk.keys.add(b.dataset.mv); b.classList.add('hold'); }, off = () => { walk.keys.delete(b.dataset.mv); b.classList.remove('hold'); };
+  b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointerleave', off); b.addEventListener('pointercancel', off);
+  b.addEventListener('contextmenu', e => e.preventDefault());
+});
+document.getElementById('padSpeed').onclick = e => { walk.fast = !walk.fast; e.target.textContent = walk.fast ? '小走り' : '歩く'; e.target.classList.toggle('on', walk.fast); };
+const KEYMAP = { ArrowUp: 'fwd', KeyW: 'fwd', ArrowDown: 'back', KeyS: 'back', ArrowLeft: 'turnL', ArrowRight: 'turnR', KeyA: 'left', KeyD: 'right', KeyQ: 'lookup', KeyE: 'lookdn' };
+addEventListener('keydown', e => { if (view === 'walk' && KEYMAP[e.code]) { walk.keys.add(KEYMAP[e.code]); e.preventDefault(); } });
+addEventListener('keyup', e => { if (KEYMAP[e.code]) walk.keys.delete(KEYMAP[e.code]); });
+{ let drag = null; const el = renderer.domElement;   // 画面をなぞって見回す
+  el.addEventListener('pointerdown', e => { if (view === 'walk') drag = { x: e.clientX, y: e.clientY }; });
+  addEventListener('pointermove', e => { if (!drag || view !== 'walk') return;
+    walk.yaw += (e.clientX - drag.x) * 0.004; walk.pitch = Math.max(-1.2, Math.min(1.2, walk.pitch + (e.clientY - drag.y) * 0.004)); drag = { x: e.clientX, y: e.clientY }; });
+  addEventListener('pointerup', () => drag = null); }
+function walkStep(dt) {
+  const k = walk.keys, v = (walk.fast ? 3.5 : 1.3) * dt, fx = -Math.sin(walk.yaw), fz = -Math.cos(walk.yaw);
+  let mf = (k.has('fwd') ? 1 : 0) - (k.has('back') ? 1 : 0), ms = (k.has('right') ? 1 : 0) - (k.has('left') ? 1 : 0);
+  camera.position.x += (fx * mf - fz * ms) * v; camera.position.z += (fz * mf + fx * ms) * v;
+  camera.position.x = Math.max(-80, Math.min(80, camera.position.x)); camera.position.z = Math.max(-80, Math.min(80, camera.position.z)); camera.position.y = EYE;
+  walk.yaw += ((k.has('turnL') ? 1 : 0) - (k.has('turnR') ? 1 : 0)) * 1.2 * dt;
+  walk.pitch = Math.max(-1.2, Math.min(1.2, walk.pitch + ((k.has('lookup') ? 1 : 0) - (k.has('lookdn') ? 1 : 0)) * 0.9 * dt));
+  camera.rotation.set(walk.pitch, walk.yaw, 0, 'YXZ');
+  controls.target.copy(camera.position).add(new THREE.Vector3(fx, 0, fz).multiplyScalar(10));   // 他の視点に戻したとき用
+}
 const menuBtn = document.getElementById('menuBtn'), head = document.getElementById('head');
 menuBtn.onclick = () => { const o = head.classList.toggle('open'); menuBtn.classList.toggle('open', o); };
 document.getElementById('tlBtn').onclick = e => { const on = document.body.classList.toggle('tl-on'); e.target.textContent = on ? '工程バーを隠す' : '工程バーを出す'; };
@@ -1297,7 +1341,9 @@ function tick() {
     runStep(idx, Math.min(tt, 1));
   }
   document.getElementById('fill').style.width = ((steps[idx].start + Math.min(tt, 1) * steps[idx].dur) / totalDur * 100).toFixed(2) + '%';
-  if (view === 'op') {
+  pad.style.display = view === 'walk' ? 'grid' : 'none';
+  if (view === 'walk') walkStep(dt);
+  else if (view === 'op') {
     const cr = crane250.g.visible ? crane250 : crane100;
     const eye = new THREE.Vector3(1.2, 2.2, cr.o.w / 2 - 0.45); cr.turret.localToWorld(eye); camera.position.copy(eye); camera.lookAt(cr.hook.position);
   } else {
