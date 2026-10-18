@@ -46,10 +46,13 @@
   #info.hide { display: none; }
   .red { color: #b3261e; }
   .note { color: #6b7280; font-size: 11px; margin-top: 6px; }
-  #pad { position: absolute; left: 12px; bottom: 110px; display: none; grid-template-columns: repeat(3, 64px); gap: 5px; padding: 8px; z-index: 5; user-select: none; -webkit-user-select: none; touch-action: none; }
-  #pad button { height: 46px; padding: 0; font-size: 12px; touch-action: none; }
-  #pad button.hold { background: #1f2f4f; color: #fff; }
-  #pad .cap { grid-column: 1 / 4; font-size: 11px; color: #6b7280; text-align: center; }
+  /* 歩いて見る: 半透明の仮想スティック（左下）と小走りボタン（右下） */
+  #stick, #runBtn { position: absolute; display: none; z-index: 5; user-select: none; -webkit-user-select: none; touch-action: none; }
+  #stick { left: 28px; bottom: 120px; width: 128px; height: 128px; border-radius: 50%; background: rgba(255,255,255,.18); border: 2px solid rgba(255,255,255,.55); box-shadow: 0 0 0 1px rgba(31,47,79,.18); }
+  #stick .knob { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%; background: rgba(255,255,255,.55); border: 2px solid rgba(255,255,255,.85); box-shadow: 0 1px 4px rgba(31,47,79,.25); }
+  #runBtn { right: 28px; bottom: 130px; width: 72px; height: 72px; border-radius: 50%; padding: 0; font-size: 12px; background: rgba(255,255,255,.22); border: 2px solid rgba(255,255,255,.6); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+  #runBtn.on { background: rgba(31,47,79,.55); border-color: rgba(255,255,255,.85); }
+  #walkHint { position: absolute; left: 50%; top: 92px; transform: translateX(-50%); display: none; z-index: 5; font-size: 12px; color: #fff; background: rgba(31,47,79,.6); padding: 4px 10px; border-radius: 3px; pointer-events: none; transition: opacity 1s; white-space: nowrap; }
   .lbl { font-size: 9px; line-height: 1.25; background: rgba(255,255,255,.8); border: 1px solid #b6bcc6; color: #1f2937; padding: 0 3px; border-radius: 2px; white-space: nowrap; pointer-events: none; }
   .lbl.crane { border-color: #1f2f4f; color: #1f2f4f; font-weight: 600; }
   .lbl.warn { border-color: #b3261e; color: #b3261e; }
@@ -69,7 +72,8 @@
     #step .t { font-size: 13px; } #step .d { font-size: 11px; } #step .s { display: none; }
     #tl { left: 6px; right: auto; width: calc(100vw - 12px); box-sizing: border-box; bottom: 6px; } #months { font-size: 9px; }
     .lbl { font-size: 8px; padding: 0 2px; }
-    #pad { left: 6px; right: auto; width: auto; bottom: 118px; grid-template-columns: repeat(3, 54px); gap: 4px; padding: 6px; } #pad button { height: 42px; font-size: 11px; }
+    #stick { left: 18px; bottom: 118px; width: 112px; height: 112px; } #runBtn { right: 18px; bottom: 128px; width: 64px; height: 64px; }
+    #walkHint { top: 60px; font-size: 11px; }
   }
 </style>
 </head>
@@ -101,12 +105,9 @@
   </div>
 </div>
 
-<div id="pad" class="panel">
-  <div class="cap">作業員の目の高さ（1.6m）で歩く。画面をなぞると向きが変わる</div>
-  <button data-mv="lookup">見上げる</button><button data-mv="fwd">前へ</button><button data-mv="lookdn">見下ろす</button>
-  <button data-mv="turnL">左を向く</button><button data-mv="back">後ろへ</button><button data-mv="turnR">右を向く</button>
-  <button data-mv="left">左へ</button><button id="padSpeed">歩く</button><button data-mv="right">右へ</button>
-</div>
+<div id="stick"><div class="knob"></div></div>
+<button id="runBtn">小走り</button>
+<div id="walkHint">左のスティックで歩く／画面をなぞって見回す</div>
 <div id="now" class="panel"><div class="date" id="dateT">2026年7月17日（金）</div><div class="stage" id="stageT">準備工</div></div>
 
 <div id="info" class="panel">
@@ -1262,24 +1263,32 @@ function startWalk() {
   const p = W(-14, -18, EYE), look = W(0, 0, 6); camera.position.copy(p);
   walk.yaw = Math.atan2(-(look.x - p.x), -(look.z - p.z)); walk.pitch = Math.atan2(look.y - p.y, Math.hypot(look.x - p.x, look.z - p.z));
 }
-const pad = document.getElementById('pad');
-pad.querySelectorAll('[data-mv]').forEach(b => {
-  const on = e => { e.preventDefault(); walk.keys.add(b.dataset.mv); b.classList.add('hold'); }, off = () => { walk.keys.delete(b.dataset.mv); b.classList.remove('hold'); };
-  b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointerleave', off); b.addEventListener('pointercancel', off);
-  b.addEventListener('contextmenu', e => e.preventDefault());
-});
-document.getElementById('padSpeed').onclick = e => { walk.fast = !walk.fast; e.target.textContent = walk.fast ? '小走り' : '歩く'; e.target.classList.toggle('on', walk.fast); };
+const stick = document.getElementById('stick'), knob = stick.querySelector('.knob'), runBtn = document.getElementById('runBtn'), walkHint = document.getElementById('walkHint');
+walk.sx = 0; walk.sy = 0;
+{ let sid = null; const R = () => stick.clientWidth / 2;
+  const put = e => { const r = stick.getBoundingClientRect(), rad = R();
+    let dx = e.clientX - (r.left + rad), dy = e.clientY - (r.top + rad); const m = Math.hypot(dx, dy), lim = rad * 0.8;
+    if (m > lim) { dx *= lim / m; dy *= lim / m; }
+    knob.style.transform = `translate(${dx}px, ${dy}px)`; walk.sx = dx / lim; walk.sy = dy / lim; };
+  const end = e => { if (e.pointerId !== sid) return; sid = null; walk.sx = walk.sy = 0; knob.style.transform = ''; };
+  stick.addEventListener('pointerdown', e => { e.preventDefault(); sid = e.pointerId; stick.setPointerCapture(sid); put(e); });
+  stick.addEventListener('pointermove', e => { if (e.pointerId === sid) put(e); });
+  stick.addEventListener('pointerup', end); stick.addEventListener('pointercancel', end);
+  stick.addEventListener('contextmenu', e => e.preventDefault()); }
+runBtn.onclick = () => { walk.fast = !walk.fast; runBtn.classList.toggle('on', walk.fast); };
 const KEYMAP = { ArrowUp: 'fwd', KeyW: 'fwd', ArrowDown: 'back', KeyS: 'back', ArrowLeft: 'turnL', ArrowRight: 'turnR', KeyA: 'left', KeyD: 'right', KeyQ: 'lookup', KeyE: 'lookdn' };
 addEventListener('keydown', e => { if (view === 'walk' && KEYMAP[e.code]) { walk.keys.add(KEYMAP[e.code]); e.preventDefault(); } });
 addEventListener('keyup', e => { if (KEYMAP[e.code]) walk.keys.delete(KEYMAP[e.code]); });
-{ let drag = null; const el = renderer.domElement;   // 画面をなぞって見回す
-  el.addEventListener('pointerdown', e => { if (view === 'walk') drag = { x: e.clientX, y: e.clientY }; });
-  addEventListener('pointermove', e => { if (!drag || view !== 'walk') return;
-    walk.yaw += (e.clientX - drag.x) * 0.004; walk.pitch = Math.max(-1.2, Math.min(1.2, walk.pitch + (e.clientY - drag.y) * 0.004)); drag = { x: e.clientX, y: e.clientY }; });
-  addEventListener('pointerup', () => drag = null); }
+{ let drag = null; const el = renderer.domElement;   // 画面をなぞって見回す（スティックの指とは別に数える）
+  el.style.touchAction = 'none';
+  el.addEventListener('pointerdown', e => { if (view === 'walk' && !drag) drag = { id: e.pointerId, x: e.clientX, y: e.clientY }; });
+  addEventListener('pointermove', e => { if (!drag || e.pointerId !== drag.id || view !== 'walk') return;
+    walk.yaw += (e.clientX - drag.x) * 0.004; walk.pitch = Math.max(-1.2, Math.min(1.2, walk.pitch + (e.clientY - drag.y) * 0.004)); drag.x = e.clientX; drag.y = e.clientY; });
+  const up = e => { if (drag && e.pointerId === drag.id) drag = null; }; addEventListener('pointerup', up); addEventListener('pointercancel', up); }
 function walkStep(dt) {
   const k = walk.keys, v = (walk.fast ? 3.5 : 1.3) * dt, fx = -Math.sin(walk.yaw), fz = -Math.cos(walk.yaw);
-  let mf = (k.has('fwd') ? 1 : 0) - (k.has('back') ? 1 : 0), ms = (k.has('right') ? 1 : 0) - (k.has('left') ? 1 : 0);
+  let mf = (k.has('fwd') ? 1 : 0) - (k.has('back') ? 1 : 0) - walk.sy, ms = (k.has('right') ? 1 : 0) - (k.has('left') ? 1 : 0) + walk.sx;
+  const mm = Math.hypot(mf, ms); if (mm > 1) { mf /= mm; ms /= mm; }   // スティックの倒し具合で速さが変わる
   camera.position.x += (fx * mf - fz * ms) * v; camera.position.z += (fz * mf + fx * ms) * v;
   camera.position.x = Math.max(-80, Math.min(80, camera.position.x)); camera.position.z = Math.max(-80, Math.min(80, camera.position.z)); camera.position.y = EYE;
   walk.yaw += ((k.has('turnL') ? 1 : 0) - (k.has('turnR') ? 1 : 0)) * 1.2 * dt;
@@ -1341,7 +1350,7 @@ function tick() {
     runStep(idx, Math.min(tt, 1));
   }
   document.getElementById('fill').style.width = ((steps[idx].start + Math.min(tt, 1) * steps[idx].dur) / totalDur * 100).toFixed(2) + '%';
-  pad.style.display = view === 'walk' ? 'grid' : 'none';
+  const wk = view === 'walk'; if (stick.style.display !== (wk ? 'block' : 'none')) { stick.style.display = runBtn.style.display = walkHint.style.display = wk ? 'block' : 'none'; if (wk) { walkHint.style.opacity = 1; clearTimeout(walk.ht); walk.ht = setTimeout(() => walkHint.style.opacity = 0, 5000); } }
   if (view === 'walk') walkStep(dt);
   else if (view === 'op') {
     const cr = crane250.g.visible ? crane250 : crane100;
