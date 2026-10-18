@@ -1,0 +1,1080 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>久慈第1風力発電所 建設工事 施工シミュレーション（着工〜完成）</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #dfe3e8; font-family: "Yu Gothic UI", "Meiryo", sans-serif; color: #1f2937; }
+  #app { position: absolute; inset: 0; }
+  .panel { position: absolute; background: rgba(255,255,255,.94); border: 1px solid #c9ced6; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  #menuBtn { left: 12px; top: 12px; width: 40px; height: 36px; padding: 9px 9px; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; z-index: 3; }
+  #menuBtn i { display: block; height: 3px; background: #1f2f4f; border-radius: 1px; }
+  #menuBtn.open { background: #1f2f4f; } #menuBtn.open i { background: #fff; }
+  #head { left: 60px; top: 12px; width: 350px; padding: 10px 12px; display: none; z-index: 3; }
+  #head.open { display: block; }
+  #tl { display: none; } body.tl-on #tl { display: block; }
+  #step { bottom: 12px !important; } body.tl-on #step { bottom: 64px !important; }
+  #head h1 { margin: 0 0 2px; font-size: 15px; color: #1f2f4f; }
+  #head .sub { font-size: 11px; color: #6b7280; }
+  .btns { display: flex; gap: 5px; margin-top: 7px; flex-wrap: wrap; }
+  button { font-family: inherit; font-size: 12px; padding: 4px 9px; border: 1px solid #1f2f4f; background: #fff; color: #1f2f4f; border-radius: 3px; cursor: pointer; }
+  button.on { background: #1f2f4f; color: #fff; }
+  #now { left: 50%; transform: translateX(-50%); top: 12px; padding: 8px 18px; text-align: center; min-width: 380px; }
+  #now .date { font-size: 22px; font-weight: 700; color: #1f2f4f; letter-spacing: .02em; }
+  #now .stage { font-size: 12px; color: #6b7280; }
+  #step { left: 50%; transform: translateX(-50%); bottom: 64px; padding: 8px 16px; min-width: 520px; max-width: 760px; text-align: center; }
+  #step .t { font-weight: 600; font-size: 15px; color: #1f2f4f; }
+  #step .d { font-size: 12px; color: #374151; margin-top: 2px; }
+  #step .s { font-size: 11px; color: #6b7280; margin-top: 3px; }
+  #step .s.assume { color: #b3261e; }
+  #tl { left: 12px; right: 12px; bottom: 12px; height: 40px; padding: 4px 10px; }
+  #track { position: relative; height: 16px; margin-top: 4px; background: #e5e7eb; cursor: pointer; }
+  #fill { position: absolute; left: 0; top: 0; bottom: 0; background: #1f2f4f; }
+  #track .tick { position: absolute; top: -2px; width: 1px; height: 20px; background: #9aa3af; }
+  #track .tick.major { background: #1f2f4f; width: 2px; }
+  #months { position: relative; height: 14px; font-size: 11px; color: #4b5563; }
+  #months span { position: absolute; top: 0; transform: translateX(-2px); white-space: nowrap; }
+  #info { right: 12px; top: 12px; width: 290px; padding: 10px 12px; font-size: 12px; max-height: calc(100% - 200px); overflow: auto; }
+  #info h2 { font-size: 13px; color: #1f2f4f; margin: 8px 0 4px; border-left: 3px solid #1f2f4f; padding-left: 6px; }
+  #info h2:first-child { margin-top: 0; }
+  #info table { border-collapse: collapse; width: 100%; }
+  #info td { border-bottom: 1px solid #e5e7eb; padding: 3px 2px; vertical-align: top; }
+  #info td:first-child { color: #6b7280; white-space: nowrap; width: 70px; }
+  #info.hide { display: none; }
+  .red { color: #b3261e; }
+  .note { color: #6b7280; font-size: 11px; margin-top: 6px; }
+  .lbl { font-size: 9px; line-height: 1.25; background: rgba(255,255,255,.8); border: 1px solid #b6bcc6; color: #1f2937; padding: 0 3px; border-radius: 2px; white-space: nowrap; pointer-events: none; }
+  .lbl.crane { border-color: #1f2f4f; color: #1f2f4f; font-weight: 600; }
+  .lbl.warn { border-color: #b3261e; color: #b3261e; }
+  .lbl.count { border-color: #1f2f4f; color: #1f2f4f; font-weight: 600; font-size: 11px; }
+  /* スマホ（幅 700px 以下）: 説明は畳み、パネルを小さく */
+  @media (max-width: 700px) {
+    #menuBtn { left: 6px; top: 6px; }
+    #head { left: 52px; right: auto; top: 6px; width: calc(100vw - 58px); box-sizing: border-box; padding: 6px 8px; }
+    #head h1 { font-size: 13px; } #head .sub { display: none; }
+    .btns { gap: 4px; margin-top: 5px; } button { font-size: 11px; padding: 3px 7px; }
+    #info { display: none; } #info.force { display: block; left: 6px; right: 6px; top: auto; bottom: 120px; width: auto; max-height: 45%; }
+    #now { left: 52px; right: auto; width: calc(100vw - 58px); box-sizing: border-box; transform: none; top: 6px; bottom: auto; min-width: 0; padding: 4px 8px; }
+    #head.open ~ #now { display: none; }
+    body.tl-on #step { bottom: 52px !important; } #step { bottom: 6px !important; }
+    #now .date { font-size: 15px; } #now .stage { font-size: 11px; }
+    #step { left: 6px; right: auto; width: calc(100vw - 12px); box-sizing: border-box; transform: none; min-width: 0; max-width: none; bottom: 52px; padding: 5px 8px; }
+    #step .t { font-size: 13px; } #step .d { font-size: 11px; } #step .s { display: none; }
+    #tl { left: 6px; right: auto; width: calc(100vw - 12px); box-sizing: border-box; bottom: 6px; } #months { font-size: 9px; }
+    .lbl { font-size: 8px; padding: 0 2px; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<button id="menuBtn" class="panel" aria-label="メニュー" title="メニュー"><i></i><i></i><i></i></button>
+<div id="head" class="panel">
+  <h1>久慈第1風力発電所 建設工事　施工シミュレーション</h1>
+  <div class="sub">着工（仮設事務所 7/17）から完成まで。提出書類一式（週間工程表・各作業計画書・配筋図ほか）をもとにした概略モデル</div>
+  <div class="btns">
+    <button id="play">一時停止</button>
+    <button data-speed="1">1倍</button>
+    <button data-speed="2" class="on">2倍</button>
+    <button data-speed="4">4倍</button>
+    <button data-speed="8">8倍</button>
+    <button id="prev">前の作業</button>
+    <button id="next">次の作業</button>
+  </div>
+  <div class="btns">
+    <button id="autocam" class="on">おまかせ視点</button>
+    <button data-view="all">全体</button>
+    <button data-view="top">真上</button>
+    <button data-view="op">運転席</button>
+    <button id="labelsBtn">名前を隠す</button>
+    <button id="infoBtn">説明を隠す</button>
+    <button id="tlBtn">工程バーを出す</button>
+  </div>
+</div>
+
+<div id="now" class="panel"><div class="date" id="dateT">2026年7月17日（金）</div><div class="stage" id="stageT">準備工</div></div>
+
+<div id="info" class="panel">
+  <h2>工事の概要</h2>
+  <table>
+    <tr><td>工事件名</td><td>岩手久慈第1発電所建設（330kW）</td></tr>
+    <tr><td>場所</td><td>岩手県久慈市山形町繋 第4地割27-1</td></tr>
+    <tr><td>発注者</td><td>山鋼プランテック株式会社</td></tr>
+    <tr><td>元請</td><td>東京電設サービス株式会社</td></tr>
+    <tr><td>施工</td><td>株式会社青森テクニカ</td></tr>
+    <tr><td>建方</td><td>岩谷組（250t オールテレーン）</td></tr>
+  </table>
+  <h2>主な寸法（資料より）</h2>
+  <table>
+    <tr><td>下段基礎</td><td>9.0 × 9.0 × H2.4m（81㎡・約194㎥）</td></tr>
+    <tr><td>上部基礎</td><td>4.4 × 4.4m</td></tr>
+    <tr><td>電気室基礎</td><td>5.9 × 4.0 × 0.6m、箱抜き 450角</td></tr>
+    <tr><td>タワー</td><td>11.76m × 3本</td></tr>
+    <tr><td>ブレード</td><td>18.18m × 3枚</td></tr>
+    <tr><td>重機</td><td>BH07・BH02・BH01、ポンプ車（100〜160㎥/h）、100t ラフター、250t オールテレーン、40m 高所作業車</td></tr>
+  </table>
+  <h2>画面の見方</h2>
+  <table>
+    <tr><td><span class="red">赤い輪</span></td><td>クレーン旋回範囲の立入禁止</td></tr>
+    <tr><td><span class="red">赤い影</span></td><td>吊荷の真下の立入禁止</td></tr>
+    <tr><td>赤い字</td><td>資料に無く推測で補った部分</td></tr>
+  </table>
+  <div class="note">寸法・配置は図面からの読み取りで、1〜2m 程度の誤差があります。クレーンやポンプ車の姿勢は見た目のための概算で、能力の確認には使えません。下のバーをクリックすると、その作業へ飛べます。</div>
+</div>
+
+<div id="step" class="panel"><div class="t" id="stepT"></div><div class="d" id="stepD"></div><div class="s" id="stepS"></div></div>
+<div id="tl" class="panel"><div id="months"></div><div id="track"><div id="fill"></div></div></div>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/+esm';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js/+esm';
+import { CSS2DRenderer, CSS2DObject } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/renderers/CSS2DRenderer.js/+esm';
+
+// ===================================================================================
+// 座標: 現場の向き（配置図の格子）にそろえた a（道路・仮置場の長手方向）と b（それに直角）を使う。
+// 原点 = 風車の中心。単位 m。世界座標は x=東, z=南, y=上。現場は約 -23.5° 回っている。
+// ===================================================================================
+const ROT = Math.atan2(-0.40, 0.92);
+const U = new THREE.Vector3(Math.cos(ROT), 0, Math.sin(ROT));
+const V = new THREE.Vector3(-Math.sin(ROT), 0, Math.cos(ROT));
+const W = (a, b, y = 0) => new THREE.Vector3(U.x * a + V.x * b, y, U.z * a + V.z * b);
+const HEAD_U = -Math.atan2(U.z, U.x);
+const L = {   // 配置図からの読み取り（a, b）
+  crane250: [9.6, 2.1], crane100a: [-15.4, 7.1], crane100b: [-3.1, 8.7], aerial: [9.6, 2.1],
+  yard1: [1.5, 11.8], yard2: [-15.2, 5.8], elec: [-8.6, -1.6],
+  pump: [-1.0, -9.5], office: [-27, 26], toilet: [-22.5, 26.5], board: [-31.5, 15], gate: [-32.6, 20]
+};
+const SEC_LEN = 11.76, PED_TOP = 0.5, LOW_TOP = -0.2, LOW_H = 2.4, PIT_D = 2.65, TOWER_TOP = PED_TOP + SEC_LEN * 3;
+const R_BASE = 1.35, R_TOP = 0.95, BLADE_LEN = 18.18;
+const ROAD_B = 20;
+
+// ===== 描画の土台 =====
+const app = document.getElementById('app');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+app.appendChild(renderer.domElement);
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize(innerWidth, innerHeight);
+Object.assign(labelRenderer.domElement.style, { position: 'absolute', top: '0', pointerEvents: 'none' });
+app.appendChild(labelRenderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xdfe5ec);
+scene.fog = new THREE.Fog(0xdfe5ec, 150, 340);
+const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.3, 1500);
+camera.position.set(-60, 40, -20);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 5, 4);
+controls.maxPolarAngle = Math.PI * 0.495;
+controls.enableDamping = true;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8f80, 0.9));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+sun.position.set(-40, 80, 30); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03;
+Object.assign(sun.shadow.camera, { left: -70, right: 70, top: 70, bottom: -70, near: 1, far: 240 });
+scene.add(sun);
+
+const M = (c, o = {}) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.8, metalness: 0.05 }, o));
+const MAT = {
+  grass: M(0x6f7f55), pad: M(0xb7b1a1), road: M(0x9c968a), soil: M(0x7a5c3e), soilDark: M(0x5e4632), gravel: M(0xa8a39a),
+  concrete: M(0xc9c7c0), fresh: M(0x8f9294, { roughness: 0.35 }), lean: M(0xb5b3ad), plywood: M(0xc9a46a), plate: M(0x5f646b, { metalness: 0.5, roughness: 0.55 }),
+  rebar: M(0x8a4b2a, { metalness: 0.3, roughness: 0.6 }), white: M(0xf3f4f6, { roughness: 0.5 }), yellow: M(0xe0b11a, { roughness: 0.5 }),
+  red: M(0xc0392b, { roughness: 0.55 }), dark: M(0x30343a), steel: M(0x9aa1a8, { metalness: 0.6, roughness: 0.4 }), glass: M(0x7fa6c2, { roughness: 0.2, metalness: 0.3 }),
+  blue: M(0x2f5fa8), green: M(0x55705a), orange: M(0xf08a24), helmet: M(0xffffff, { roughness: 0.4 }), tree: M(0x3f5a3a), trunk: M(0x5b4632),
+  sheet: M(0x3a6fb5, { roughness: 0.6, side: THREE.DoubleSide }), cubicle: M(0xd9dde2, { roughness: 0.45 }), ink: M(0xc8102e),
+  rope: new THREE.LineBasicMaterial({ color: 0x222222 }), hose: new THREE.LineBasicMaterial({ color: 0x111111 }),
+  zone: new THREE.MeshBasicMaterial({ color: 0xc8102e, transparent: true, opacity: 0.18, depthWrite: false }),
+  zoneLine: new THREE.MeshBasicMaterial({ color: 0xc8102e, transparent: true, opacity: 0.75 }), cone: M(0xe25a1c)
+};
+const box = (w, h, d, m) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.castShadow = o.receiveShadow = true; return o; };
+const cyl = (rt, rb, h, m, seg = 20) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), m); o.castShadow = o.receiveShadow = true; return o; };
+const labels = [];
+function label(obj, text, cls = '', y = 0, x = 0, z = 0) {
+  const d = document.createElement('div'); d.className = 'lbl ' + cls; d.textContent = text;
+  const l = new CSS2DObject(d); l.position.set(x, y, z); obj.add(l); labels.push(l); return l;
+}
+// 現場（a,b）にそろえた入れ物。中の物はローカルの x=a, z=b で置ける
+const SITE = new THREE.Group(); SITE.rotation.y = HEAD_U; scene.add(SITE);
+const at = (o, a, b, y = 0) => { o.position.set(a, y, b); return o; };
+
+// ===== 地形・造成ヤード（穴あき） =====
+{ // 周りの地面（造成ヤードの所は穴をあけ、掘った穴が見えるようにする）
+  const gs = new THREE.Shape(); gs.moveTo(-400, 400); gs.lineTo(400, 400); gs.lineTo(400, -400); gs.lineTo(-400, -400); gs.lineTo(-400, 400);
+  const hp = new THREE.Path(); hp.moveTo(-32.6, 21.3); hp.lineTo(-32.6, -28.7); hp.lineTo(29.4, -28.7); hp.lineTo(29.4, 21.3); hp.lineTo(-32.6, 21.3); gs.holes.push(hp);
+  const ground = new THREE.Mesh(new THREE.ShapeGeometry(gs), MAT.grass); ground.rotation.x = -Math.PI / 2; ground.position.y = -0.02; ground.receiveShadow = true; SITE.add(ground);
+  const under = box(62, 0.05, 50, MAT.soilDark); at(under, -1.6, 3.7, -3.2); SITE.add(under);   // ヤードの下（穴の底より下）
+}
+const PITS = { main: { a: 0, b: 0, w: 11, d: 11 }, elec: { a: L.elec[0], b: L.elec[1], w: 6.0, d: 7.9 } };   // 電気室基礎は縦（b 方向）5.9m
+{
+  const s = new THREE.Shape();
+  s.moveTo(-32.6, 21.3); s.lineTo(29.4, 21.3); s.lineTo(29.4, -28.7); s.lineTo(-32.6, -28.7); s.lineTo(-32.6, 21.3);   // y = -b
+  Object.values(PITS).forEach(p => {
+    const h = new THREE.Path(); h.moveTo(p.a - p.w / 2, -(p.b - p.d / 2)); h.lineTo(p.a + p.w / 2, -(p.b - p.d / 2)); h.lineTo(p.a + p.w / 2, -(p.b + p.d / 2)); h.lineTo(p.a - p.w / 2, -(p.b + p.d / 2)); s.holes.push(h);
+  });
+  const pad = new THREE.Mesh(new THREE.ShapeGeometry(s), MAT.pad); pad.rotation.x = -Math.PI / 2; pad.receiveShadow = true; SITE.add(pad);
+}
+// 穴（床掘）: 壁 4 面と底。深さは掘削の進みで変わる
+function makePit(p) {
+  const g = new THREE.Group(); at(g, p.a, p.b); SITE.add(g);
+  const floor = box(p.w, 0.05, p.d, MAT.soilDark); g.add(floor);
+  const walls = [[p.w, 0.05, 0, p.d / 2], [p.w, 0.05, 0, -p.d / 2], [0.05, p.d, p.w / 2, 0], [0.05, p.d, -p.w / 2, 0]].map(([w, d, x, z]) => {
+    const m = box(w, 1, d, MAT.soil); m.position.set(x, 0, z); g.add(m); return m;
+  });
+  const fill = box(p.w, 0.04, p.d, MAT.pad); fill.position.y = -0.01; g.add(fill); fill.visible = false;   // 埋戻し後
+  const cover = box(p.w, 0.03, p.d, MAT.pad); cover.position.y = -0.005; g.add(cover);                   // 掘る前（地面）
+  return { g, fill, p, set(depth) {
+    cover.visible = depth <= 0.001;
+    floor.position.y = -depth; walls.forEach(w => { w.scale.y = Math.max(depth, 0.01); w.position.y = -depth / 2; });
+    floor.visible = depth > 0.001; walls.forEach(w => w.visible = depth > 0.001);
+  } };
+}
+const pitMain = makePit(PITS.main), pitElec = makePit(PITS.elec);
+
+// 進入路（公道からゲートまで）と延長部分
+const road = box(140, 0.06, 6, MAT.road); at(road, -32.6 - 70, ROAD_B, 0.0); SITE.add(road);
+const roadExt = box(15, 0.07, 10, MAT.gravel); at(roadExt, -32.6 - 7.5, ROAD_B, 0.01); SITE.add(roadExt);
+label(roadExt, '進入路の延長・拡幅 約15m（岩谷組の指摘）', '', 0.8);
+// 林
+const rng = (s => () => (s = (s * 16807) % 2147483647) / 2147483647)(7);
+for (let i = 0; i < 190; i++) {
+  const a = (rng() - 0.5) * 300, b = (rng() - 0.5) * 300;
+  if (a > -40 && a < 38 && b > -36 && b < 30) continue;
+  if (Math.abs(b - ROAD_B) < 7 && a < -30) continue;
+  const h = 9 + rng() * 9, t = new THREE.Group();
+  const tr = cyl(0.25, 0.35, h * 0.3, MAT.trunk, 8); tr.position.y = h * 0.15; t.add(tr);
+  const cr = new THREE.Mesh(new THREE.ConeGeometry(2.2 + rng() * 1.5, h * 0.8, 9), MAT.tree); cr.position.y = h * 0.62; cr.castShadow = true; t.add(cr);
+  at(t, a, b); SITE.add(t);
+}
+
+// ===== 仮設（事務所・トイレ・ゲート・掲示板） =====
+const office = new THREE.Group(); at(office, ...L.office); SITE.add(office);
+{ const c = box(6.0, 2.6, 2.4, MAT.white); c.position.y = 1.5; office.add(c); const w = box(1.6, 0.9, 0.05, MAT.glass); w.position.set(1.2, 1.8, -1.23); office.add(w);
+  const d = box(0.9, 2.0, 0.05, MAT.steel); d.position.set(-1.8, 1.2, -1.23); office.add(d); const base = box(6.2, 0.2, 2.6, MAT.dark); base.position.y = 0.1; office.add(base); }
+label(office, '仮設事務所', '', 3.4);
+const toilet = new THREE.Group(); at(toilet, ...L.toilet); SITE.add(toilet);
+{ const t = box(1.2, 2.3, 1.2, MAT.blue); t.position.y = 1.15; toilet.add(t); }
+label(toilet, 'トイレ', '', 2.8);
+const gate = new THREE.Group(); at(gate, ...L.gate); SITE.add(gate);
+{ [-3.6, 3.6].forEach(z => { const p = box(0.25, 2.2, 0.25, MAT.white); p.position.set(0, 1.1, z); gate.add(p); });
+  const bar = box(0.12, 0.12, 7.2, MAT.yellow); bar.position.y = 1.9; gate.add(bar); }
+label(gate, '入口ゲート', '', 2.6);
+const board = new THREE.Group(); at(board, ...L.board); SITE.add(board);
+{ const p = box(2.4, 1.6, 0.08, MAT.white); p.position.y = 1.8; board.add(p); [-1.1, 1.1].forEach(x => { const l = box(0.08, 1.8, 0.08, MAT.steel); l.position.set(x, 0.9, 0); board.add(l); }); board.rotation.y = Math.PI / 2; }
+label(board, '安全掲示板', '', 3.0);
+
+// ===== 基礎（下段・上部・アンカー・鉄筋・型枠・養生） =====
+const fdn = new THREE.Group(); SITE.add(fdn);
+const stoneMain = box(9.6, 0.2, 9.6, MAT.gravel); stoneMain.position.y = -PIT_D + 0.1; fdn.add(stoneMain);
+const leanForm = new THREE.Group(); fdn.add(leanForm);
+[[9.6, 0.06, 0, 4.8], [9.6, 0.06, 0, -4.8], [0.06, 9.6, 4.8, 0], [0.06, 9.6, -4.8, 0]].forEach(([w, d, x, z]) => { const f = box(w, 0.12, d, MAT.plywood); f.position.set(x, -PIT_D + 0.26, z); leanForm.add(f); });
+const leanMain = box(9.4, 0.05, 9.4, MAT.lean); leanMain.position.y = -PIT_D + 0.225; fdn.add(leanMain);
+const inkLines = new THREE.Group(); fdn.add(inkLines);
+[[9, 0.02, 0, 0], [0.02, 9, 0, 0], [9, 0.02, 0, 4.5], [9, 0.02, 0, -4.5], [0.02, 9, 4.5, 0], [0.02, 9, -4.5, 0]].forEach(([w, d, x, z]) => { const l = box(w, 0.01, d, MAT.ink); l.position.set(x, -PIT_D + 0.255, z); inkLines.add(l); });
+{ const rm = new THREE.Mesh(new THREE.RingGeometry(1.2, 1.3, 48), MAT.zoneLine); rm.rotation.x = -Math.PI / 2; rm.position.y = -PIT_D + 0.26; inkLines.add(rm); }
+// アンカーボルト（キャン）
+const cage = new THREE.Group(); fdn.add(cage);
+{ const n = 48, bm = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.025, 0.025, 3.0, 6), MAT.steel, n), d = new THREE.Object3D();
+  for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, r = i % 2 ? 1.18 : 1.32; d.position.set(Math.cos(a) * r, 0, Math.sin(a) * r); d.updateMatrix(); bm.setMatrixAt(i, d.matrix); }
+  cage.add(bm); [-1.4, 1.2].forEach(y => { const t = new THREE.Mesh(new THREE.TorusGeometry(1.25, 0.06, 6, 48), MAT.steel); t.rotation.x = Math.PI / 2; t.position.y = y; cage.add(t); }); }
+const CAGE_Y = -PIT_D + 0.25 + 1.5;
+label(cage, 'アンカーボルト（キャン）', '', 2.0);
+// 鉄筋（格子。数を増やして組み上がりを見せる）
+function rebarMesh(w, d, pitch, y0, layers) {
+  const nx = Math.floor(w / pitch) + 1, nz = Math.floor(d / pitch) + 1, total = (nx + nz) * layers.length;
+  const im = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), MAT.rebar, total); im.castShadow = true;
+  const o = new THREE.Object3D(); let i = 0;
+  layers.forEach(y => {
+    for (let k = 0; k < nx; k++) { o.position.set(-w / 2 + k * pitch, y0 + y, 0); o.scale.set(0.032, 0.032, d); o.updateMatrix(); im.setMatrixAt(i++, o.matrix); }
+    for (let k = 0; k < nz; k++) { o.position.set(0, y0 + y + 0.035, -d / 2 + k * pitch); o.scale.set(w, 0.032, 0.032); o.updateMatrix(); im.setMatrixAt(i++, o.matrix); }
+  });
+  im.count = 0; im.userData.total = total; return im;
+}
+const rebarMain = rebarMesh(8.8, 8.8, 0.25, -PIT_D + 0.25, [0.12, 0.3, LOW_H - 0.25, LOW_H - 0.12]); fdn.add(rebarMain);
+const setRebar = (im, f) => { im.visible = true; im.count = Math.floor(im.userData.total * f); im.instanceMatrix.needsUpdate = true; };
+const formMain = new THREE.Group(); fdn.add(formMain);
+[[9.25, 0.05, 0, 4.62], [9.25, 0.05, 0, -4.62], [0.05, 9.25, 4.62, 0], [0.05, 9.25, -4.62, 0]].forEach(([w, d, x, z]) => {
+  const f = box(w, LOW_H + 0.1, d, MAT.plywood); f.position.set(x, -PIT_D + 0.25 + (LOW_H + 0.1) / 2, z); formMain.add(f);
+});
+const pourMain = box(9, 1, 9, MAT.fresh); fdn.add(pourMain);
+const lowMain = box(9, LOW_H, 9, MAT.concrete); lowMain.position.y = -PIT_D + 0.25 + LOW_H / 2; fdn.add(lowMain);
+label(lowMain, '下段基礎 9.0×9.0×H2.4m', '', LOW_H / 2 + 0.6, 3.5, 4.5);
+const earth = new THREE.Mesh(new THREE.TorusGeometry(5.0, 0.04, 6, 64), MAT.rebar); earth.rotation.x = Math.PI / 2; earth.position.y = -PIT_D + 0.1; fdn.add(earth);
+const fep = new THREE.Group(); fdn.add(fep);
+[0.4, -0.4].forEach(z => { const p = cyl(0.06, 0.06, 6, MAT.orange, 8); p.rotation.z = Math.PI / 2; p.position.set(-3, -PIT_D + 0.5, z); fep.add(p); });
+const cure = new THREE.Group(); fdn.add(cure);
+{ const mt = box(9.6, 0.04, 9.6, MAT.sheet); mt.position.y = LOW_TOP + 0.03; cure.add(mt);
+  for (let k = 0; k < 10; k++) { const s = box(0.4, 0.25, 0.25, MAT.soil); s.position.set(-4.5 + (k % 5) * 2.2, LOW_TOP + 0.15, k < 5 ? 4.6 : -4.6); cure.add(s); } }
+label(cure, '湿潤養生（マット＋シート）', '', 0.8);
+const ped = box(4.4, PED_TOP - LOW_TOP, 4.4, MAT.concrete); ped.position.y = (PED_TOP + LOW_TOP) / 2; fdn.add(ped);
+label(ped, '上部基礎 4.4×4.4m', '', 0.9, -2.6, -2.6);
+
+// 電気室基礎（5.9 × 4.0 × 0.6、箱抜き 450 角）
+const EL = { a: L.elec[0], b: L.elec[1], w: 5.9, d: 4.0, bottom: -0.65, h: 0.6 };
+const elg = new THREE.Group(); at(elg, EL.a, EL.b); elg.rotation.y = -Math.PI / 2; SITE.add(elg);   // 長い辺（5.9m）を b 方向に
+const elStone = box(6.4, 0.15, 4.5, MAT.gravel); elStone.position.y = -0.85 + 0.075; elg.add(elStone);
+const elLeanForm = new THREE.Group(); elg.add(elLeanForm);
+[[6.4, 0.05, 0, 2.2], [6.4, 0.05, 0, -2.2], [0.05, 4.4, 3.2, 0], [0.05, 4.4, -3.2, 0]].forEach(([w, d, x, z]) => { const f = box(w, 0.1, d, MAT.plywood); f.position.set(x, -0.85 + 0.2, z); elLeanForm.add(f); });
+const elLean = box(6.2, 0.05, 4.3, MAT.lean); elLean.position.y = -0.85 + 0.175; elg.add(elLean);
+const elRebar = rebarMesh(5.7, 3.8, 0.25, EL.bottom, [0.08, EL.h - 0.1]); elg.add(elRebar);
+const elForm = new THREE.Group(); elg.add(elForm);
+[[6.0, 0.05, 0, 2.03], [6.0, 0.05, 0, -2.03], [0.05, 4.1, 2.98, 0], [0.05, 4.1, -2.98, 0]].forEach(([w, d, x, z]) => { const f = box(w, EL.h + 0.1, d, MAT.plywood); f.position.set(x, EL.bottom + (EL.h + 0.1) / 2, z); elForm.add(f); });
+const elPipes = new THREE.Group(); elg.add(elPipes);
+[-0.3, 0.0, 0.3].forEach(z => { const p = cyl(0.05, 0.05, 6, MAT.orange, 8); p.rotation.z = Math.PI / 2; p.position.set(-4.5, EL.bottom + 0.3, z + 1.1); elPipes.add(p); });
+const elPour = box(5.9, 1, 4.0, MAT.fresh); elg.add(elPour);
+const elSlab = new THREE.Group(); elg.add(elSlab);
+{ const s = box(5.9, EL.h, 4.0, MAT.concrete); s.position.y = EL.bottom + EL.h / 2; elSlab.add(s);
+  const hole = box(0.45, 0.02, 0.45, MAT.dark); hole.position.set(5.9 / 2 - 0.825 - 0.225, EL.bottom + EL.h + 0.005, 4.0 / 2 - 1.65 - 0.225); elSlab.add(hole); }
+label(elSlab, '電気室基礎 5.9×4.0m（箱抜き450角）', '', 1.0);
+const cubicle = box(2.6, 2.3, 1.6, MAT.cubicle); const pcs = box(1.8, 2.2, 1.2, MAT.cubicle);
+SITE.add(cubicle); SITE.add(pcs);
+label(cubicle, 'キュービクル（QB盤）', '', 1.6); label(pcs, 'PCS盤（エンクロージャー）', '', 1.6);
+const QB_L = new THREE.Vector3(EL.a + 0.2, EL.bottom + EL.h + 1.15, EL.b - 1.2), PCS_L = new THREE.Vector3(EL.a + 0.4, EL.bottom + EL.h + 1.1, EL.b + 1.5);
+cubicle.rotation.y = pcs.rotation.y = -Math.PI / 2;
+
+// ===== 敷鉄板・仮置場 =====
+function plateField(a, b, nAlong, nAcross, alongB, pl = 6.0, pw = 1.5) {
+  const g = new THREE.Group(); at(g, a, b); if (alongB) g.rotation.y = -Math.PI / 2; SITE.add(g); const list = [];
+  for (let i = 0; i < nAcross; i++) for (let j = 0; j < nAlong; j++) { const p = box(pl - 0.03, 0.022, pw - 0.03, MAT.plate); p.castShadow = false; p.position.set((j - (nAlong - 1) / 2) * pl, 0.05, (i - (nAcross - 1) / 2) * pw); g.add(p); list.push(p); }
+  g.userData.list = list; return g;
+}
+const plates250 = plateField(...L.crane250, 3, 8, true);
+label(plates250, '敷鉄板 6.0×1.5m×24枚', '', 0.5, 0, 7);
+const plates100a = plateField(...L.crane100a, 3, 6, true, 3.0);
+const plates100b = plateField(...L.crane100b, 3, 6, false, 3.0);
+const plateStack = new THREE.Group(); at(plateStack, -24, 12); SITE.add(plateStack);
+for (let k = 0; k < 14; k++) { const p = box(6, 0.022, 1.5, MAT.plate); p.position.y = 0.05 + k * 0.025; p.castShadow = false; plateStack.add(p); }
+label(plateStack, '敷鉄板（搬入・仮置き）', '', 1.0);
+function yard(a, b, l, w, alongB, text) {
+  const g = new THREE.Group(); at(g, a, b); if (alongB) g.rotation.y = -Math.PI / 2;
+  const f = box(l, 0.03, w, new THREE.MeshStandardMaterial({ color: 0x8e7cc3, transparent: true, opacity: 0.35 })); f.position.y = 0.05; g.add(f);
+  SITE.add(g); label(g, text, '', 0.6, 0, -w / 2 - 0.6); return g;
+}
+const yardTower = yard(...L.yard1, 20, 7, false, '資機材仮置場 20.0×7.0m（タワー・ナセル）');
+const yardBlade = yard(...L.yard2, 20, 7, true, 'ブレード仮置場 7.0×20.0m');
+
+// ===== 部材（タワー・ナセル・ブレード） =====
+const radiusAt = h => R_BASE + (R_TOP - R_BASE) * (h / (SEC_LEN * 3));
+function towerSection(k) {
+  const g = new THREE.Group(), r0 = radiusAt(k * SEC_LEN), r1 = radiusAt((k + 1) * SEC_LEN);
+  const body = cyl(r1, r0, SEC_LEN, MAT.white, 32); body.position.y = SEC_LEN / 2; g.add(body);
+  [0.1, SEC_LEN - 0.1].forEach((y, i) => { const f = cyl((i ? r1 : r0) + 0.12, (i ? r1 : r0) + 0.12, 0.2, MAT.steel, 32); f.position.y = y; g.add(f); });
+  if (k === 0) { const door = box(0.9, 2.1, 0.1, MAT.steel); door.position.set(0, 1.6, r0); g.add(door); }
+  return g;
+}
+const sections = [0, 1, 2].map(k => { const s = towerSection(k); scene.add(s); return s; });
+function nacelleObj() {
+  const g = new THREE.Group();
+  const body = box(6.0, 2.6, 2.6, MAT.white); body.position.set(0.8, 1.5, 0); g.add(body);
+  const cover = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 6.0, 24, 1, false, 0, Math.PI), MAT.white); cover.rotation.z = Math.PI / 2; cover.position.set(0.8, 2.8, 0); cover.castShadow = true; g.add(cover);
+  const yaw = cyl(R_TOP + 0.1, R_TOP + 0.1, 0.3, MAT.steel, 32); yaw.position.y = 0.15; g.add(yaw);
+  const hub = new THREE.Group(); hub.position.set(4.3, 1.8, 0); g.add(hub);
+  const hb = cyl(1.0, 1.15, 1.6, MAT.white, 24); hb.rotation.z = Math.PI / 2; hub.add(hb);
+  const sp = new THREE.Mesh(new THREE.SphereGeometry(1.0, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2), MAT.white); sp.rotation.z = -Math.PI / 2; sp.position.x = 0.8; sp.castShadow = true; hub.add(sp);
+  const flanges = [];
+  for (let i = 0; i < 3; i++) { const f = new THREE.Group(); f.rotation.x = i * Math.PI * 2 / 3; hub.add(f); const r = cyl(0.62, 0.62, 0.25, MAT.steel, 20); r.position.y = 1.15; f.add(r); flanges.push(f); }
+  return { g, hub, flanges };
+}
+const nac = nacelleObj(); scene.add(nac.g);
+function bladeObj() {
+  const s = new THREE.Shape(), c = t => (t < 0.08 ? 0.75 : t < 0.22 ? 0.75 + (t - 0.08) / 0.14 * 0.85 : 1.6 * (1 - (t - 0.22) / 0.78) + 0.25);
+  s.moveTo(-0.65, 0); for (let i = 0; i <= 24; i++) s.lineTo(-c(i / 24) * 0.45, i / 24 * BLADE_LEN); for (let i = 24; i >= 0; i--) s.lineTo(c(i / 24) * 0.55, i / 24 * BLADE_LEN);
+  const geo = new THREE.ExtrudeGeometry(s, { depth: 0.35, bevelEnabled: true, bevelSize: 0.08, bevelThickness: 0.12, bevelSegments: 2 }); geo.translate(0, 0, -0.17);
+  const m = new THREE.Mesh(geo, MAT.white); m.castShadow = true; const g = new THREE.Group(); g.add(m);
+  const root = cyl(0.62, 0.62, 0.6, MAT.steel, 20); root.position.y = 0.3; g.add(root); return g;
+}
+const blades = [0, 1, 2].map(() => { const b = bladeObj(); scene.add(b); return b; });
+
+// ===== 作業員 =====
+function worker() {
+  const g = new THREE.Group();
+  const b = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 0.9, 4, 8), MAT.orange); b.position.y = 0.75; b.castShadow = true; g.add(b);
+  const h = new THREE.Mesh(new THREE.SphereGeometry(0.17, 12, 8), MAT.helmet); h.position.y = 1.5; g.add(h); return g;
+}
+const crew = []; for (let i = 0; i < 8; i++) { const w = worker(); SITE.add(w); const l = label(w, '', '', 2.1); crew.push({ w, l }); }
+function setCrew(list) {
+  crew.forEach((c, i) => {
+    const it = list && list[i]; c.w.visible = !!it;
+    if (it) { at(c.w, it[0], it[1], it[3] || 0); c.l.element.textContent = it[2] || ''; c.l.element.style.display = it[2] ? '' : 'none'; }
+  });
+}
+
+// ===== 車両 =====
+function wheels(g, len, w, n, y = 0.55, r = 0.55) {
+  for (let i = 0; i < n; i++) for (const sd of [-1, 1]) { const wh = cyl(r, r, 0.45, MAT.dark, 14); wh.rotation.x = Math.PI / 2; wh.position.set(-len / 2 + 1.2 + i * (len - 2.4) / Math.max(n - 1, 1), y, sd * (w / 2 - 0.2)); g.add(wh); }
+}
+function truckBase(len, w, paint) {
+  const g = new THREE.Group();
+  const ch = box(len, 0.5, w, MAT.dark); ch.position.y = 0.95; g.add(ch);
+  const cab = box(1.9, 2.0, w, paint); cab.position.set(len / 2 - 0.95, 2.1, 0); g.add(cab);
+  const win = box(0.05, 0.8, w - 0.3, MAT.glass); win.position.set(len / 2 + 0.01, 2.5, 0); g.add(win);
+  wheels(g, len, w, 3); SITE.add(g); return g;
+}
+function mixerTruck() {
+  const g = truckBase(8.5, 2.5, MAT.white);
+  const drum = new THREE.Group(); drum.position.set(-0.9, 2.4, 0); drum.rotation.z = 0.22; g.add(drum);
+  const d = cyl(0.9, 1.15, 4.8, MAT.white, 18); d.rotation.z = Math.PI / 2; drum.add(d);
+  for (let k = 0; k < 4; k++) { const s = box(4.4, 0.08, 0.08, MAT.red); s.position.set(0, Math.cos(k * 1.57) * 1.05, Math.sin(k * 1.57) * 1.05); drum.add(s); }
+  g.userData.drum = drum; return g;
+}
+function pumpTruck() {
+  const g = truckBase(10.5, 2.5, MAT.white);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const f = cyl(0.35, 0.35, 0.08, MAT.dark, 12); f.position.set(sx * 3.6, 0.1, sz * 2.9); g.add(f); const bm = box(0.3, 0.3, 1.7, MAT.dark); bm.position.set(sx * 3.6, 0.9, sz * 2.1); g.add(bm); }
+  const hopper = box(1.2, 0.8, 1.6, MAT.dark); hopper.position.set(-5.4, 1.4, 0); g.add(hopper);
+  const turret = new THREE.Group(); turret.position.set(1.8, 2.0, 0); g.add(turret);
+  turret.add(box(1.4, 0.8, 1.4, MAT.red));
+  const b1 = new THREE.Group(); b1.position.y = 0.5; turret.add(b1); const s1 = box(10, 0.45, 0.4, MAT.red); s1.position.x = 5; b1.add(s1);
+  const b2 = new THREE.Group(); b2.position.x = 10; b1.add(b2); const s2 = box(10, 0.38, 0.34, MAT.white); s2.position.x = 5; b2.add(s2);
+  const tip = new THREE.Group(); tip.position.x = 10; b2.add(tip);
+  const hose = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), MAT.hose); scene.add(hose);
+  g.userData = { turret, b1, b2, tip, hose };
+  return g;
+}
+/** ポンプ車のブームを、目標点の真上 h m に先端が来るように 2 節で曲げる */
+function aimPump(p, target, h) {
+  const { turret, b1, b2, tip, hose } = p.userData;
+  p.updateWorldMatrix(true, true);
+  const tw = new THREE.Vector3(); turret.getWorldPosition(tw);
+  const inv = new THREE.Quaternion(); p.getWorldQuaternion(inv); inv.invert();
+  const d = target.clone().sub(tw).applyQuaternion(inv);
+  turret.rotation.y = Math.atan2(-d.z, d.x);
+  const x = Math.hypot(d.x, d.z), y = target.y + h - (tw.y + 0.5), L1 = 10, L2 = 10;
+  const dist = Math.min(Math.hypot(x, y), L1 + L2 - 0.01);
+  const a2 = Math.acos(THREE.MathUtils.clamp((L1 * L1 + L2 * L2 - dist * dist) / (2 * L1 * L2), -1, 1));
+  const a1 = Math.atan2(y, x) + Math.acos(THREE.MathUtils.clamp((L1 * L1 + dist * dist - L2 * L2) / (2 * L1 * dist), -1, 1));
+  b1.rotation.z = a1; b2.rotation.z = -(Math.PI - a2);
+  tip.updateWorldMatrix(true, false); const tp = new THREE.Vector3(); tip.getWorldPosition(tp);
+  hose.geometry.setFromPoints([tp, new THREE.Vector3(tp.x, target.y + 0.3, tp.z)]); hose.visible = true;
+}
+function dumpTruck() { const g = truckBase(7.5, 2.4, MAT.yellow); const bed = box(4.6, 1.1, 2.4, MAT.yellow); bed.position.set(-1.2, 1.75, 0); g.add(bed); return g; }
+function flatTruck(len = 9, paint = MAT.blue) { const g = truckBase(len, 2.5, paint); const deck = box(len - 2.2, 0.2, 2.5, MAT.steel); deck.position.set(-1.1, 1.3, 0); g.add(deck); return g; }
+function trailer(len = 22) {
+  const g = new THREE.Group(); SITE.add(g);
+  const tr = box(5.5, 0.5, 2.5, MAT.dark); tr.position.set(len / 2 - 2.5, 0.95, 0); g.add(tr);
+  const cab = box(2.2, 2.4, 2.5, MAT.blue); cab.position.set(len / 2 - 1.2, 2.3, 0); g.add(cab);
+  const deck = box(len - 5, 0.3, 2.9, MAT.steel); deck.position.set(-2.5, 0.85, 0); g.add(deck);
+  for (let i = 0; i < 4; i++) for (const sd of [-1, 1]) { const wh = cyl(0.45, 0.45, 0.4, MAT.dark, 12); wh.rotation.x = Math.PI / 2; wh.position.set(-len / 2 + 0.8 + i * 1.1, 0.45, sd * 1.2); g.add(wh); }
+  for (let i = 0; i < 2; i++) for (const sd of [-1, 1]) { const wh = cyl(0.55, 0.55, 0.45, MAT.dark, 12); wh.rotation.x = Math.PI / 2; wh.position.set(len / 2 - 4 + i * 2.2, 0.55, sd * 1.05); g.add(wh); }
+  const cargo = new THREE.Group(); cargo.position.set(-2.5, 1.0, 0); g.add(cargo); g.userData.cargo = cargo; return g;
+}
+function backhoe(paint = MAT.yellow, scale = 1) {
+  const g = new THREE.Group(); g.scale.setScalar(scale); SITE.add(g);
+  [-1.2, 1.2].forEach(z => { const t = box(4.2, 0.8, 0.6, MAT.dark); t.position.set(0, 0.4, z); g.add(t); });
+  const house = new THREE.Group(); house.position.y = 0.9; g.add(house);
+  const body = box(3.0, 1.1, 2.6, paint); body.position.set(-0.5, 0.55, 0); house.add(body);
+  const cab = box(1.2, 1.6, 1.0, paint); cab.position.set(0.5, 1.6, 0.75); house.add(cab);
+  const cw = box(0.9, 0.9, 2.5, MAT.dark); cw.position.set(-1.9, 0.6, 0); house.add(cw);
+  const boom = new THREE.Group(); boom.position.set(0.9, 1.0, -0.2); house.add(boom);
+  const bs = box(4.6, 0.45, 0.4, paint); bs.position.x = 2.3; boom.add(bs);
+  const arm = new THREE.Group(); arm.position.x = 4.6; boom.add(arm);
+  const as = box(2.6, 0.35, 0.3, paint); as.position.x = 1.3; arm.add(as);
+  const bucket = new THREE.Group(); bucket.position.x = 2.6; arm.add(bucket);
+  const bk = box(0.8, 0.7, 1.0, MAT.dark); bk.position.set(0.3, -0.3, 0); bucket.add(bk);
+  const load = box(0.6, 0.4, 0.8, MAT.soil); load.position.set(0.3, -0.05, 0); bucket.add(load); load.visible = false;
+  return { g, house, boom, arm, bucket, load };
+}
+/** バックホウの動き: p=0〜1 で「掘る→持ち上げ→旋回して捨てる→戻る」 */
+function digCycle(bh, p, yawDig, yawDump, deep = 0.3) {
+  const s = (p * 4) % 4, i = Math.floor(s), f = s - i, e = f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2;
+  const P = [{ y: yawDig, b: -0.3 - deep * 0.6, a: -1.6, k: -0.2 }, { y: yawDig, b: 0.35, a: -1.2, k: -1.5 }, { y: yawDump, b: 0.45, a: -0.9, k: 0.6 }, { y: yawDump, b: 0.3, a: -1.4, k: -1.2 }];
+  const A = P[i], B = P[(i + 1) % 4];
+  bh.house.rotation.y = A.y + (B.y - A.y) * e; bh.boom.rotation.z = A.b + (B.b - A.b) * e; bh.arm.rotation.z = A.a + (B.a - A.a) * e; bh.bucket.rotation.z = A.k + (B.k - A.k) * e;
+  bh.load.visible = i === 1 || (i === 2 && f < 0.7);
+}
+function parkBH(bh) { bh.house.rotation.y = 0; bh.boom.rotation.z = 0.15; bh.arm.rotation.z = -1.9; bh.bucket.rotation.z = -1.2; bh.load.visible = false; }
+
+// 移動式クレーン。車体は SITE の中、フック・ロープは世界
+function makeCrane(o) {
+  const g = new THREE.Group();
+  const car = box(o.len, 1.4, o.w, o.paint); car.position.y = 1.55; g.add(car);
+  wheels(g, o.len, o.w, o.axles, 0.62, 0.62);
+  const cab = box(1.9, 1.7, o.w, o.paint); cab.position.set(o.len / 2 - 0.9, 2.9, 0); g.add(cab);
+  const outs = new THREE.Group(); g.add(outs);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+    const arm = new THREE.Group(); arm.position.set(sx * (o.len / 2 - 1.2), 0, 0); outs.add(arm);
+    const beam = box(0.45, 0.45, o.outW / 2, MAT.dark); beam.position.set(0, 1.1, sz * o.outW / 4); arm.add(beam);
+    const jack = cyl(0.18, 0.18, 1.0, MAT.steel, 10); jack.position.set(0, 0.6, sz * o.outW / 2); arm.add(jack);
+    const flt = cyl(0.45, 0.45, 0.08, MAT.dark, 14); flt.position.set(0, 0.12, sz * o.outW / 2); arm.add(flt);
+  }
+  const turret = new THREE.Group(); turret.position.set(o.turretX, 2.25, 0); g.add(turret);
+  const deck = box(5.2, 0.9, o.w - 0.1, o.paint); deck.position.set(-1.0, 0.45, 0); turret.add(deck);
+  const cw = box(1.6, 1.8, o.w - 0.2, MAT.dark); cw.position.set(-3.3, 1.3, 0); turret.add(cw);
+  const opc = box(1.6, 1.6, 0.95, o.paint); opc.position.set(0.9, 1.4, o.w / 2 - 0.45); turret.add(opc);
+  const pivot = new THREE.Group(); pivot.position.set(-1.8, 1.6, 0); turret.add(pivot);
+  const secs = [];
+  for (let i = 0; i < o.boomSecs; i++) { const s = 1 - i * 0.12, b = box(o.boomMin, 1.2 * s, 1.0 * s, i % 2 ? MAT.white : o.paint); pivot.add(b); secs.push(b); }
+  const tip = new THREE.Group(); pivot.add(tip);
+  const sh = cyl(0.45, 0.45, 0.6, MAT.dark, 14); sh.rotation.x = Math.PI / 2; tip.add(sh);
+  const hook = new THREE.Group(); hook.add(box(0.7, 1.0, 0.5, o.paint));
+  const hk = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.08, 8, 16, Math.PI * 1.4), MAT.steel); hk.position.y = -0.75; hook.add(hk); scene.add(hook);
+  const rope = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), MAT.rope); scene.add(rope);
+  const zone = new THREE.Group(); g.add(zone);
+  const ring = new THREE.Mesh(new THREE.RingGeometry(o.tailR - 0.15, o.tailR, 64), MAT.zoneLine); ring.rotation.x = -Math.PI / 2; ring.position.set(o.turretX, 0.09, 0); zone.add(ring);
+  const disc = new THREE.Mesh(new THREE.CircleGeometry(o.tailR, 64), MAT.zone); disc.rotation.x = -Math.PI / 2; disc.position.set(o.turretX, 0.08, 0); zone.add(disc);
+  for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, c = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.7, 10), MAT.cone); c.position.set(o.turretX + Math.cos(a) * (o.tailR + 0.5), 0.35, Math.sin(a) * (o.tailR + 0.5)); zone.add(c); }
+  SITE.add(g);
+  return { g, turret, pivot, secs, tip, hook, rope, outs, zone, o };
+}
+const crane250 = makeCrane({ len: 15.5, w: 3.0, axles: 6, outW: 8.6, turretX: -1.2, paint: MAT.yellow, boomSecs: 6, boomMin: 15.0, boomMax: 70, tailR: 5.6 });
+const crane100 = makeCrane({ len: 12.0, w: 2.8, axles: 3, outW: 7.0, turretX: -0.6, paint: MAT.red, boomSecs: 5, boomMin: 11.5, boomMax: 47, tailR: 4.6 });
+label(crane250.g, '①250tオールテレーンクレーン', 'crane', 5.5);
+label(crane100.g, '②100tラフタークレーン', 'crane', 5.0);
+function aimCrane(cr, hookPos, ropeLen) {
+  cr.g.updateWorldMatrix(true, true);
+  const tw = new THREE.Vector3(); cr.turret.getWorldPosition(tw);
+  const inv = new THREE.Quaternion(); cr.g.getWorldQuaternion(inv); inv.invert();
+  const dl = hookPos.clone().sub(tw); dl.y = 0; dl.applyQuaternion(inv);
+  cr.turret.rotation.y = Math.atan2(-dl.z, dl.x);
+  const r = Math.max(Math.hypot(dl.x, dl.z) - cr.pivot.position.x, 3);
+  const pw = new THREE.Vector3(); cr.pivot.getWorldPosition(pw);
+  const tipY = hookPos.y + ropeLen;
+  const Lb = THREE.MathUtils.clamp(Math.hypot(r, tipY - pw.y), cr.o.boomMin, cr.o.boomMax);
+  cr.pivot.rotation.z = Math.atan2(tipY - pw.y, r);
+  const n = cr.secs.length;
+  cr.secs.forEach((s, i) => { s.position.x = cr.o.boomMin / 2 + (Lb - cr.o.boomMin) * (i / Math.max(n - 1, 1)) - 0.3 * i; });
+  cr.tip.position.set(Lb, 0.3, 0); cr.tip.updateWorldMatrix(true, false);
+  const tipW = new THREE.Vector3(); cr.tip.getWorldPosition(tipW);
+  cr.hook.position.copy(hookPos); cr.hook.position.y += 0.9;
+  cr.rope.geometry.setFromPoints([tipW, cr.hook.position.clone().add(new THREE.Vector3(0, 0.5, 0))]);
+}
+function stowCrane(cr) {   // 走行姿勢: ブームを前に倒し、アウトリガーを格納
+  cr.turret.rotation.y = 0; cr.pivot.rotation.z = 0.02; cr.secs.forEach((s, i) => s.position.x = cr.o.boomMin / 2 - 0.3 * i);
+  cr.tip.position.set(cr.o.boomMin, 0.3, 0); cr.outs.scale.z = 0.4; cr.zone.visible = false;
+  cr.g.updateWorldMatrix(true, true); const tp = new THREE.Vector3(); cr.tip.getWorldPosition(tp);
+  cr.hook.position.copy(tp).add(new THREE.Vector3(0, -1.5, 0)); cr.rope.geometry.setFromPoints([tp, cr.hook.position.clone().add(new THREE.Vector3(0, 0.5, 0))]);
+}
+function showCrane(cr, on) { cr.g.visible = cr.hook.visible = cr.rope.visible = on; }
+/** 高所作業車 */
+function makeAerial() {
+  const g = new THREE.Group();
+  const car = box(11, 1.4, 2.5, MAT.white); car.position.y = 1.5; g.add(car); wheels(g, 11, 2.5, 3, 0.6, 0.6);
+  const cab = box(1.9, 1.8, 2.5, MAT.white); cab.position.set(4.6, 2.95, 0); g.add(cab);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const f = cyl(0.4, 0.4, 0.08, MAT.dark, 14); f.position.set(sx * 4, 0.12, sz * 3.2); g.add(f); }
+  const turret = new THREE.Group(); turret.position.set(-3.5, 2.3, 0); g.add(turret); turret.add(box(2.0, 0.8, 2.0, MAT.yellow));
+  const pivot = new THREE.Group(); pivot.position.set(0, 0.6, 0); turret.add(pivot);
+  const secs = [0, 1, 2, 3].map(i => { const b = box(10.5, 0.7 - i * 0.1, 0.6 - i * 0.08, i % 2 ? MAT.white : MAT.yellow); pivot.add(b); return b; });
+  const basket = new THREE.Group(); scene.add(basket);
+  basket.add(box(1.8, 0.1, 0.9, MAT.steel));
+  const rail = box(1.85, 0.06, 0.95, MAT.yellow); rail.position.y = 1.1; basket.add(rail);
+  [0.4, -0.4].forEach(x => { const w = worker(); w.position.set(x, 0.05, 0); basket.add(w); });
+  label(g, '③40m高所作業車', 'crane', 5); SITE.add(g);
+  return { g, turret, pivot, secs, basket };
+}
+const aerial = makeAerial();
+function aimAerial(target) {
+  aerial.g.updateWorldMatrix(true, true);
+  const tw = new THREE.Vector3(); aerial.turret.getWorldPosition(tw);
+  const inv = new THREE.Quaternion(); aerial.g.getWorldQuaternion(inv); inv.invert();
+  const dl = target.clone().sub(tw).applyQuaternion(inv);
+  aerial.turret.rotation.y = Math.atan2(-dl.z, dl.x);
+  const r = Math.hypot(dl.x, dl.z), up = target.y - (tw.y + 0.6), Lb = Math.hypot(r, up);
+  aerial.pivot.rotation.z = Math.atan2(up, r);
+  aerial.secs.forEach((s, i) => { s.position.x = 5.25 + (Lb - 10.5) * (i / 3); });
+  aerial.basket.position.copy(target); aerial.basket.position.y -= 0.05;
+}
+
+// 吊荷の下の立入禁止
+const underLoad = new THREE.Mesh(new THREE.CircleGeometry(1, 48), MAT.zone); underLoad.rotation.x = -Math.PI / 2; underLoad.position.y = 0.12; scene.add(underLoad);
+label(underLoad, '吊荷の下 立入禁止', 'warn', 0);
+function showUnder(p, r) { underLoad.visible = true; underLoad.position.set(p.x, 0.12, p.z); underLoad.scale.setScalar(r); }
+
+// ===== 道筋（a,b の折れ線）に沿って走らせる =====
+function pathAt(pts, t) {
+  const sg = []; let tot = 0;
+  for (let i = 1; i < pts.length; i++) { const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); sg.push(l); tot += l; }
+  let s = THREE.MathUtils.clamp(t, 0, 1) * tot, i = 0;
+  while (i < sg.length - 1 && s > sg[i]) { s -= sg[i]; i++; }
+  const f = sg[i] ? s / sg[i] : 0, A = pts[i], B = pts[i + 1];
+  return { a: A[0] + (B[0] - A[0]) * f, b: A[1] + (B[1] - A[1]) * f, head: -Math.atan2(B[1] - A[1], B[0] - A[0]) };
+}
+function drive(o, pts, t, reverse = false) {
+  const p = pathAt(pts, t); o.visible = true; at(o, p.a, p.b, 0); o.rotation.y = p.head + (reverse ? Math.PI : 0); return p;
+}
+const ENTRY = [[-150, ROAD_B], [-35, ROAD_B]];
+const IN = (...pts) => ENTRY.concat(pts);
+
+// ===== 車両・重機の用意 =====
+const bh07 = backhoe(MAT.yellow, 1.0); label(bh07.g, 'バックホウ BH07（青森テクニカ）', 'crane', 4.2);
+const bh02 = backhoe(MAT.yellow, 0.75); label(bh02.g, 'バックホウ BH02', 'crane', 3.5);
+const bh01 = backhoe(MAT.green, 0.75); label(bh01.g, 'バックホウ BH01（Meetエコ）', 'crane', 3.5);
+const mixers = [0, 1, 2, 3].map(() => mixerTruck());
+label(mixers[0], '生コン車', '', 4.2);
+const pump = pumpTruck(); label(pump, 'コンクリートポンプ車（100〜160㎥/h）', 'crane', 4.5);
+const unic = flatTruck(8); label(unic, 'ユニック車', '', 4.0);
+const plateTruck = flatTruck(10, MAT.green); label(plateTruck, '敷鉄板の搬入', '', 4.0);
+const trailers = [0, 1, 2, 3].map(() => trailer(22));
+trailers.forEach(t => label(t, 'トレーラー（部材搬入）', '', 4.2));
+const counter = new THREE.Group(); scene.add(counter); const counterL = label(counter, '', 'count', 0);
+const soilPile = new THREE.Mesh(new THREE.ConeGeometry(1, 1, 24), MAT.soil); soilPile.castShadow = true; SITE.add(soilPile); at(soilPile, -6, -16);
+label(soilPile, '仮置き土（埋戻し用）', '', 0.5);
+function setPile(f) { soilPile.visible = f > 0.01; const sc = 0.4 + 3.6 * Math.cbrt(Math.max(f, 0)); soilPile.scale.set(sc * 1.5, sc, sc * 1.5); soilPile.position.y = sc / 2; }
+
+// ===== 部材の置き方 =====
+const towerAxisLying = U.clone();
+function setSectionLying(k) {
+  const s = sections[k]; s.visible = true;
+  s.position.copy(W(L.yard1[0] - SEC_LEN / 2 - 1.5, L.yard1[1] + (k - 1) * 2.2 - 0.6, radiusAt(k * SEC_LEN) + 0.3));
+  s.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), towerAxisLying);
+}
+function setSectionStood(k) { const s = sections[k]; s.visible = true; s.position.set(0, PED_TOP + k * SEC_LEN, 0); s.quaternion.identity(); }
+const NAC_YAW = HEAD_U;
+function setNacelleYard() { nac.g.visible = true; nac.g.position.copy(W(L.yard1[0] + 6.5, L.yard1[1] + 0.5, 0.3)); nac.g.rotation.set(0, NAC_YAW, 0); }
+function setNacelleTop() { nac.g.visible = true; nac.g.position.set(0, TOWER_TOP, 0); nac.g.rotation.set(0, NAC_YAW, 0); }
+function setBladeYard(i) {
+  const b = blades[i]; if (b.parent !== scene) scene.attach(b); b.visible = true;
+  b.position.copy(W(L.yard2[0] + (i - 1) * 2.0, L.yard2[1] - BLADE_LEN / 2, 0.9));
+  b.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), V); b.rotateY(Math.PI / 2);
+}
+function attachBladeToHub(i) { const b = blades[i]; nac.flanges[i].attach(b); b.position.set(0, 1.3, 0); b.quaternion.identity(); b.visible = true; }
+/** トレーラーの荷台の上の点（世界） */
+function deckPoint(tr, along = 0, up = 0) { tr.updateWorldMatrix(true, true); const p = new THREE.Vector3(along, up, 0); tr.userData.cargo.localToWorld(p); return p; }
+const deckDir = tr => new THREE.Vector3(1, 0, 0).applyQuaternion(tr.getWorldQuaternion(new THREE.Quaternion()));
+
+// ===== 補助 =====
+const ease = t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+const lerp = (a, b, t) => a + (b - a) * t;
+const vlerp = (a, b, t) => a.clone().lerp(b, t);
+const seg = (t, a, b) => THREE.MathUtils.clamp((t - a) / (b - a), 0, 1);
+function swingPath(center, from, to, t) {
+  const a0 = Math.atan2(from.z - center.z, from.x - center.x); let a1 = Math.atan2(to.z - center.z, to.x - center.x);
+  while (a1 - a0 > Math.PI) a1 -= Math.PI * 2; while (a1 - a0 < -Math.PI) a1 += Math.PI * 2;
+  const r0 = Math.hypot(from.x - center.x, from.z - center.z), r1 = Math.hypot(to.x - center.x, to.z - center.z), a = lerp(a0, a1, t), r = lerp(r0, r1, t);
+  return new THREE.Vector3(center.x + Math.cos(a) * r, lerp(from.y, to.y, t), center.z + Math.sin(a) * r);
+}
+const C250 = () => W(...L.crane250), C100 = () => W(...L.crane100a), C100B = () => W(...L.crane100b);
+const rest250 = () => C250().add(new THREE.Vector3(-6, 14, 3));
+const rest100 = c => c.clone().add(new THREE.Vector3(4, 9, -3));
+function placeCrane(cr, ab, alongB, flip) { at(cr.g, ab[0], ab[1]); cr.g.rotation.y = (alongB ? -Math.PI / 2 : 0) + (flip ? Math.PI : 0); cr.outs.scale.z = 1; cr.zone.visible = true; showCrane(cr, true); }
+
+// ===== 最初の状態（着工前） =====
+function resetAll() {
+  [office, toilet, gate, board, roadExt, cage, rebarMain, formMain, pourMain, lowMain, earth, fep, cure, ped, inkLines, stoneMain, leanForm, leanMain,
+   elStone, elLeanForm, elLean, elRebar, elForm, elPipes, elPour, elSlab, cubicle, pcs, plates250, plates100a, plates100b, plateStack, yardTower, yardBlade,
+   bh07.g, bh02.g, bh01.g, pump, unic, plateTruck, aerial.g, aerial.basket, underLoad, counter, soilPile, ...mixers, ...trailers, ...sections, nac.g].forEach(o => o.visible = false);
+  pump.userData.hose.visible = false;
+  blades.forEach(b => { if (b.parent !== scene) scene.attach(b); b.visible = false; });
+  showCrane(crane250, false); showCrane(crane100, false);
+  pitMain.set(0); pitMain.fill.visible = false; pitElec.set(0); pitElec.fill.visible = false;
+  rebarMain.count = 0; elRebar.count = 0;
+  [gate, board, plateStack, formMain, elForm].forEach(o => o.scale.set(1, 1, 1));
+  [plates250, plates100a, plates100b].forEach(g => g.userData.list.forEach(p => p.visible = true));
+  nac.hub.rotation.x = Math.PI / 2; nac.g.rotation.set(0, NAC_YAW, 0);
+  counterL.element.style.display = 'none';
+  setCrew([]);
+}
+
+// ===================================================================================
+// 工程（場面）。run(t) は t=0〜1 でその場面の状態を作る（前の場面を run(1) で積み上げれば、どこからでも再現できる）
+// cam: [[a, b, 高さ], [a, b, 高さ]] = 視点と注視点
+// ===================================================================================
+const SRC_W = '週間工程表（久保更新）';
+const steps = [];
+const S = o => steps.push(o);
+
+S({ date: '2026-07-17', stage: '準備工', t: '仮設事務所・トイレの設置', d: 'ユニック車で事務所（コンテナ）とトイレを搬入・据付', src: SRC_W, dur: 7,
+  cam: [[-48, 34, 12], [-26, 24, 1]],
+  run(t) {
+    unic.visible = t < 1; drive(unic, IN([-28, 22.5]), seg(t, 0, 0.5));
+    office.visible = t > 0.45; office.position.y = lerp(3.5, 0, seg(t, 0.5, 0.8)); toilet.visible = t > 0.75; toilet.position.y = lerp(2.5, 0, seg(t, 0.8, 1));
+    setCrew([[-29, 24, '玉掛'], [-24, 24.5, '']]);
+  } });
+S({ date: '2026-07-20', stage: '準備工', t: '入口ゲート・安全掲示板', d: '入口ゲートと安全掲示板を設置（7/22 安全パトロール）', src: SRC_W, dur: 5,
+  cam: [[-50, 26, 6], [-31, 18, 1]],
+  run(t) { unic.visible = false; gate.visible = t > 0.2; gate.scale.y = Math.max(seg(t, 0.2, 0.5), 0.01); board.visible = t > 0.5; board.scale.y = Math.max(seg(t, 0.5, 0.8), 0.01); setCrew([[-31, 17, ''], [-30.5, 13.5, '']]); } });
+S({ date: '2026-07-20', dateEnd: '2026-07-24', stage: '風車基礎', t: '風車基礎 床掘', d: 'バックホウ BH07 で 11×11m・深さ約2.65m を掘削。掘った土は埋戻し用に場内へ仮置き', src: SRC_W, dur: 16,
+  cam: [[-24, -24, 18], [0, -2, -1]],
+  run(t) {
+    bh07.g.visible = true; at(bh07.g, 0, -9.5); bh07.g.rotation.y = -Math.PI / 2;   // 穴の北側から南（+b）向きに掘る
+    pitMain.set(PIT_D * ease(t));
+    if (t < 1) digCycle(bh07, (t * 14) % 1, 0, 1.6, ease(t)); else parkBH(bh07);
+    setPile(t);
+    setCrew([[-3.5, -7, '誘導'], [6.5, -6, '']]);
+  } });
+S({ date: '2026-07-24', stage: '風車基礎', t: '基礎砕石の敷き均し', d: '床付け面に砕石を敷き、転圧', src: SRC_W, dur: 5, cam: [[-15, -15, 13], [0, 0, -2]],
+  run(t) { pitMain.set(PIT_D); setPile(1); stoneMain.visible = t > 0.05; stoneMain.scale.set(1, Math.max(seg(t, 0.05, 1), 0.05), 1); stoneMain.position.y = -PIT_D + 0.1 * stoneMain.scale.y;
+    bh07.g.visible = true; parkBH(bh07); setCrew([[-2, -1, '', -PIT_D + 0.2], [2.5, 1.5, '', -PIT_D + 0.2]]); } });
+S({ date: '2026-07-25', stage: '風車基礎', t: '均しコンクリート 型枠設置', d: '9.6m 角の均しコン用の型枠を設置', src: SRC_W, dur: 4, cam: [[-15, -15, 13], [0, 0, -2]],
+  run(t) { stoneMain.visible = true; stoneMain.scale.set(1, 1, 1); stoneMain.position.y = -PIT_D + 0.1; leanForm.visible = true; leanForm.scale.set(Math.max(t, 0.05), 1, 1); setCrew([[-4, 3, '', -PIT_D + 0.2], [3, -3, '', -PIT_D + 0.2]]); } });
+S({ date: '2026-07-27', stage: '風車基礎', t: '均しコンクリート 打設', d: '厚さ約5cm の均しコンクリートを打設（生コン車からシュートで・概略）', src: SRC_W, dur: 6, cam: [[-17, -17, 14], [-2, 2, -2]],
+  run(t) { leanForm.visible = true; leanForm.scale.set(1, 1, 1); leanMain.visible = t > 0.3; leanMain.scale.set(Math.max(seg(t, 0.3, 1), 0.02), 1, 1);
+    mixers[0].visible = t < 1; drive(mixers[0], IN([-14, ROAD_B], [-10, 7.5], [-6.8, 6.6]), seg(t, 0, 0.3)); mixers[0].userData.drum.rotation.x += 0.1; setCrew([[-5.5, 5.8, '', 0], [2, -2, '', -PIT_D + 0.2]]); } });
+S({ date: '2026-07-29', stage: '風車基礎', t: '墨出し', d: '風車の中心と基礎の外形、アンカーの位置を均しコンに墨出し', src: SRC_W, dur: 4, cam: [[-10, -10, 11], [0, 0, -2.4]],
+  run(t) { mixers[0].visible = false; leanForm.visible = false; leanMain.visible = true; leanMain.scale.set(1, 1, 1); inkLines.visible = t > 0.1; inkLines.scale.set(Math.max(seg(t, 0.1, 1), 0.02), 1, 1); setCrew([[0, 0, '測量', -PIT_D + 0.25], [3, 3, '', -PIT_D + 0.25]]); } });
+S({ date: '2026-07-30', stage: '風車基礎', t: 'キャン（アンカーボルト）仮設置', d: 'アンカーボルト一式（キャン）を吊り込み、中心と高さを合わせて仮固定', src: SRC_W, dur: 6, cam: [[-12, -12, 9], [0, 0, -1.5]],
+  run(t) { inkLines.visible = true; inkLines.scale.set(1, 1, 1); cage.visible = true; cage.position.y = lerp(CAGE_Y + 5, CAGE_Y, ease(seg(t, 0, 0.8)));
+    bh07.g.visible = true; at(bh07.g, 0, -9.5); bh07.g.rotation.y = -Math.PI / 2; bh07.house.rotation.y = 0; bh07.boom.rotation.z = lerp(0.6, 0.25, seg(t, 0, 0.8)); bh07.arm.rotation.z = -1.0; bh07.bucket.rotation.z = -0.4;
+    setCrew([[1.6, 0, '', -PIT_D + 0.25], [-1.6, 0.4, '', -PIT_D + 0.25], [-3.5, -7, '合図']]); } });
+S({ date: '2026-07-31', dateEnd: '2026-08-08', stage: '風車基礎', t: '鉄筋組立・環状接地・FEP管', d: '下端から上端へ鉄筋を組む（ピッチは概略）。基礎の周りに環状接地、FEP 管を布設', src: SRC_W, dur: 12, cam: [[-13, -13, 10], [0, 0, -1.4]],
+  run(t) { cage.visible = true; cage.position.y = CAGE_Y; parkBH(bh07); setRebar(rebarMain, ease(t));
+    earth.visible = t > 0.3; fep.visible = t > 0.5; setCrew([[-2.5, 2, '', -PIT_D + 0.4], [2.5, -1.5, '', -PIT_D + 0.4], [3.5, 3, '', -PIT_D + 0.4], [-3.5, -3, '', -PIT_D + 0.4]]); } });
+S({ date: '2026-08-08', stage: '風車基礎', t: '下部基礎 型枠設置', d: '9.0m 角・高さ 2.4m の型枠を建て込み（日付は工程表の並びからの推測）', src: SRC_W, assume: true, dur: 6, cam: [[-15, -15, 11], [0, 0, -1.2]],
+  run(t) { setRebar(rebarMain, 1); earth.visible = fep.visible = true; formMain.visible = true; formMain.scale.set(1, Math.max(ease(t), 0.02), 1); setCrew([[-5.2, 0, '', -PIT_D + 0.3], [0, 5.2, '', -PIT_D + 0.3]]); } });
+S({ date: '2026-08-10', stage: '風車基礎', t: '下段基礎 生コン打設（ポンプ車圧送）', d: '約194㎥（9×9×2.4m）を連続打設。生コン車は場外の待機所から 1 台ずつ呼び出し、場内は徐行 10km/h・後進は誘導員の合図', src: '生コン車運行・待機計画書／車両系建設機械作業計画書（ポンプ車 8/10）／湿潤養生メモ（寸法）', dur: 26, cam: [[-30, -2, 20], [-6, -6, -1]],
+  run(t) {
+    formMain.visible = true; formMain.scale.set(1, 1, 1); bh07.g.visible = false;
+    pump.visible = true; at(pump, ...L.pump); pump.rotation.y = 0;
+    const h = LOW_H * ease(t);
+    aimPump(pump, new THREE.Vector3(0, -PIT_D + 0.25 + h, 0).add(W(Math.sin(t * 40) * 2.5, Math.cos(t * 31) * 2.5)), 3.5);
+    pourMain.visible = h > 0.02; pourMain.scale.set(1, Math.max(h, 0.02), 1); pourMain.position.y = -PIT_D + 0.25 + h / 2;
+    setRebar(rebarMain, 1);
+    // 生コン車: 公道 → ゲート → ポンプのホッパーへ後進で付ける → 荷卸し → 退場、を繰り返す
+    const N = 46, base = t * N, hopper = [L.pump[0] - 10.5, L.pump[1]];
+    mixers.forEach((m, i) => {
+      const ph = ((base + i) % 4) / 4; m.visible = t > 0 && t < 0.995;
+      if (ph < 0.45) drive(m, IN([-24, ROAD_B], [-18, 4], [hopper[0] - 4, hopper[1]]), ph / 0.45);
+      else if (ph < 0.6) { const q = seg(ph, 0.45, 0.5); at(m, lerp(hopper[0] - 4, hopper[0] - 4.2, q), hopper[1]); m.rotation.y = 0; }
+      else drive(m, [[hopper[0] - 4.2, hopper[1]], [-18, 4], [-26, ROAD_B], [-150, ROAD_B]], (ph - 0.6) / 0.4);
+      m.userData.drum.rotation.x += 0.15;
+    });
+    counter.visible = true; counterL.element.style.display = ''; counter.position.copy(W(4, -7, 5));
+    counterL.element.textContent = '打設 ' + Math.round(194 * ease(t)) + ' / 194㎥（' + Math.min(N, Math.floor(base) + 1) + ' 台目・1 台 4.25㎥）';
+    setCrew([[-2, 3, 'バイブレータ', 0], [2.5, -2, 'バイブレータ', 0], [-9, -11.5, '誘導員'], [-30, 17.5, 'ゲート誘導員'], [-5.5, -12, '圧送']]);
+  } });
+S({ date: '2026-08-10', dateEnd: '2026-08-17', stage: '風車基礎', t: '湿潤養生（7日間）', d: '暑中コンクリートのため 7 日間を推奨。養生マット＋ポリフィルム、土のうで飛散防止、1日4〜6回の散水（お盆の対応は元請と協議）', src: '湿潤養生 確認事項メモ', dur: 8, cam: [[-16, -16, 13], [0, 0, -0.5]],
+  run(t) { pump.visible = false; pump.userData.hose.visible = false; mixers.forEach(m => m.visible = false); counter.visible = false; counterL.element.style.display = 'none';
+    pourMain.visible = false; lowMain.visible = true; cure.visible = true; setCrew([[-5.5, 0, '散水', 0]]); } });
+S({ date: '2026-08-下旬', stage: '風車基礎', t: '型枠解体・上部基礎（4.4m 角）・埋戻し', d: '型枠を外し、上部基礎を打設、仮置き土で埋め戻して転圧（日付は提出書類に無し）', src: 'クレーン作業計画書の配置図（下段は埋戻し済・上部 4.4m 角）', assume: true, dur: 12, cam: [[-20, -20, 15], [0, 0, 0]],
+  run(t) {
+    cure.visible = false; formMain.visible = t < 0.25; ped.visible = t > 0.3; ped.scale.y = Math.max(seg(t, 0.3, 0.55), 0.02); ped.position.y = LOW_TOP + (PED_TOP - LOW_TOP) * ped.scale.y / 2;
+    cage.visible = true; bh07.g.visible = true; at(bh07.g, 0, -9.5); bh07.g.rotation.y = -Math.PI / 2;
+    if (t > 0.6 && t < 1) digCycle(bh07, ((t - 0.6) * 20) % 1, 1.6, 0, 0.2); else parkBH(bh07);
+    const fill = seg(t, 0.6, 1); pitMain.set(fill >= 1 ? 0.0001 : PIT_D * (1 - fill) + 0.0001); pitMain.fill.visible = fill >= 1;
+    lowMain.visible = fill < 0.92; earth.visible = fep.visible = fill < 0.3; setRebar(rebarMain, 1); rebarMain.visible = false; setPile(1 - fill);
+    setCrew([[-3.5, -7, '誘導'], [2.6, 2.6, '', fill > 0.9 ? 0 : -0.2]]);
+  } });
+S({ date: '2026-09-23', dateEnd: '2026-09-25', stage: '電気室基礎', t: '電気室基礎 掘削・砕石敷き均し', d: '5.9×4.0m の基礎の床掘（深さ約0.85m）と砕石', src: SRC_W, dur: 8, cam: [[-24, -16, 12], [-7, -2, -0.5]],
+  run(t) {
+    bh07.g.visible = true; at(bh07.g, -8.6, -9.8); bh07.g.rotation.y = -Math.PI / 2;
+    pitElec.set(0.85 * ease(seg(t, 0, 0.7))); if (t < 0.7) digCycle(bh07, (t * 10) % 1, 0, -1.4, 0.1); else parkBH(bh07);
+    elStone.visible = t > 0.75; setCrew([[-11, -6, '誘導']]);
+  } });
+S({ date: '2026-10-05', dateEnd: '2026-10-06', stage: '電気室基礎', t: '鉄板搬入・均しコン、配管埋設', d: '風車組立用の敷鉄板を搬入して仮置き。電気室の均しコン、構内柱〜電気設備基礎の配管埋設、ボーリング接地線の髭出し（BH01 は 10/7 に第2へ移動）', src: SRC_W, dur: 10, cam: [[-38, 4, 18], [-16, 4, 0]],
+  run(t) {
+    pitElec.set(0.85); elStone.visible = true; parkBH(bh07); at(bh07.g, -24, -12); bh07.g.rotation.y = 0;
+    plateTruck.visible = t < 0.9; drive(plateTruck, IN([-26, 15]), seg(t, 0, 0.45)); plateStack.visible = t > 0.45; plateStack.scale.y = Math.max(seg(t, 0.45, 0.7), 0.05);
+    elLeanForm.visible = t > 0.3 && t < 0.98; elLean.visible = t > 0.6;
+    bh01.g.visible = true; at(bh01.g, -14, -6); bh01.g.rotation.y = 0.6; digCycle(bh01, (t * 6) % 1, 0, 1.0, 0.1);
+    setCrew([[-24, 10.5, '玉掛'], [-7.4, 0.2, '', -0.6]]);
+  } });
+S({ date: '2026-10-07', dateEnd: '2026-10-14', stage: '電気室基礎', t: '電気室基礎 鉄筋・型枠・基礎内配管', d: '上端・下端の鉄筋、箱抜き（450角）の開口補強、型枠組立、基礎内配管（10/13〜14）', src: SRC_W + '／キュービクル等基礎配筋図（10/17）', dur: 9, cam: [[-17, -9, 8], [-8.6, -1.6, -0.6]],
+  run(t) { plateTruck.visible = false; bh01.g.visible = false; elLeanForm.visible = false; elLean.visible = true; setRebar(elRebar, ease(seg(t, 0, 0.6)));
+    elForm.visible = t > 0.55; elForm.scale.y = Math.max(seg(t, 0.55, 0.8), 0.05); elPipes.visible = t > 0.8; setCrew([[-8.5, -0.5, '', -0.6], [-6, -2.5, '', -0.6]]); } });
+S({ date: '2026-10-16', stage: '電気室基礎', t: '電気室基礎 生コン打設', d: '生コン車からシュートで打設（打設方法は概略）', src: SRC_W, dur: 7, cam: [[-19, -10, 9], [-8, -1, -0.5]],
+  run(t) { setRebar(elRebar, 1); elForm.visible = true; elForm.scale.y = 1; elPipes.visible = true;
+    mixers[0].visible = t < 0.98; drive(mixers[0], IN([-22, ROAD_B], [-16, 6], [-15, 1.0]), seg(t, 0, 0.35)); mixers[0].userData.drum.rotation.x += 0.15;
+    const h = EL.h * ease(seg(t, 0.35, 1)); elPour.visible = h > 0.01; elPour.scale.y = Math.max(h, 0.01); elPour.position.y = EL.bottom + h / 2;
+    setCrew([[-9.8, -1.5, '', 0], [-5.5, -1.0, 'バイブレータ', 0]]); } });
+S({ date: '2026-10-19', dateEnd: '2026-10-21', stage: '電気室基礎', t: '型枠バラシ・電気基礎部の埋戻し', d: '型枠を外して周囲を埋め戻し（BH07・BH02）', src: SRC_W, dur: 7, cam: [[-20, -11, 10], [-8.6, -1.6, -0.5]],
+  run(t) { mixers[0].visible = false; elPour.visible = false; elSlab.visible = true; elForm.visible = t < 0.3; elRebar.visible = false;
+    bh02.g.visible = true; at(bh02.g, -13, -7.5); bh02.g.rotation.y = 0.5; if (t < 1) digCycle(bh02, (t * 8) % 1, 0.9, -0.3, 0.1); else parkBH(bh02);
+    const f = seg(t, 0.35, 1); pitElec.set(f >= 1 ? 0.0001 : 0.85 * (1 - f) + 0.0001); pitElec.fill.visible = f >= 1;
+    elStone.visible = elLean.visible = elPipes.visible = f < 0.95; setCrew([[-11, -4.5, '誘導']]); } });
+S({ date: '2026-10月', stage: '搬入路', t: '進入路の延長・拡幅（約15m）', d: '岩谷組の現地確認（10/5 報告）で、道路から曲がり部までの進入路を約15m 延長する必要と、搬入時の誘導員配置の指摘あり（施工日は資料に無し）', src: 'クレーン進入路の現地確認結果（10/5）', assume: true, dur: 6, cam: [[-66, 36, 22], [-40, 20, 0]],
+  run(t) { roadExt.visible = t > 0.1; roadExt.scale.set(Math.max(seg(t, 0.1, 0.9), 0.05), 1, 1); roadExt.position.x = -32.6 - 7.5 * roadExt.scale.x;
+    bh02.g.visible = true; at(bh02.g, -38, 27); bh02.g.rotation.y = Math.PI / 2; digCycle(bh02, (t * 5) % 1, 0.4, -0.6, 0.05); setCrew([[-34, 15.5, '誘導員']]); } });
+S({ date: '2026-10-20', dateEnd: '2026-10-23', stage: '建方準備', t: '風車組立用の敷鉄板', d: '250t の据付位置に 6.0×1.5m×24 枚、100t の位置にも敷き並べ（BH07 で吊り込み）', src: SRC_W + '／クレーン作業計画書', dur: 10, cam: [[-32, -18, 26], [-2, 5, 0]],
+  run(t) {
+    bh02.g.visible = false; bh07.g.visible = true; at(bh07.g, -8, 13); bh07.g.rotation.y = 0; digCycle(bh07, (t * 12) % 1, 0.3, -0.8, 0.05);
+    plates250.visible = plates100a.visible = true; const all = plates250.userData.list.concat(plates100a.userData.list), n = Math.floor(all.length * t);
+    all.forEach((p, i) => p.visible = i < n); plateStack.visible = t < 0.95; plateStack.scale.y = Math.max(1 - t, 0.05);
+    setCrew([[4, 2, '合図'], [-12, 8, '玉掛']]);
+  } });
+S({ date: '2026-10-27', stage: '部材搬入', t: 'タワー・ナセル 搬入受入れ', d: 'トレーラー 4 台（タワー 3 本・ナセル）を誘導員の誘導で入場させ、100t ラフターで仮置場へ荷下ろし', src: SRC_W + '（10/27 受入れ）／進入路の確認結果（誘導員）', dur: 28, cam: [[-38, 36, 30], [-6, 14, 4]],
+  run(t) {
+    parkBH(bh07); at(bh07.g, -24, -12); plates250.userData.list.forEach(p => p.visible = true); plates100a.userData.list.forEach(p => p.visible = true); plateStack.visible = false;
+    yardTower.visible = true; placeCrane(crane100, L.crane100a, true, true);
+    let craneUsed = false;
+    for (let k = 0; k < 4; k++) {
+      const lt = seg(t, k / 4, (k + 1) / 4), tr = trailers[k], obj = k < 3 ? sections[k] : nac.g;
+      tr.visible = lt > 0 && lt < 1;
+      const route = IN([-25, ROAD_B - 1], [-8, ROAD_B - 3]);
+      if (lt < 0.3) drive(tr, route, lt / 0.3); else if (lt < 0.8) drive(tr, route, 1); else drive(tr, [[-8, ROAD_B - 3], [-25, ROAD_B + 1], [-150, ROAD_B + 1]], (lt - 0.8) / 0.2);
+      if (lt <= 0) { obj.visible = false; continue; }
+      if (lt >= 0.8) { if (k < 3) setSectionLying(k); else setNacelleYard(); continue; }
+      // 荷台の上の姿勢
+      const dir = deckDir(tr), qDeck = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().negate());
+      const onDeck = k < 3 ? deckPoint(tr, SEC_LEN / 2 - 1, radiusAt(k * SEC_LEN) + 0.2) : deckPoint(tr, 0, 0.2);
+      let fromP, fromQ = qDeck;
+      if (k < 3) fromP = onDeck; else { fromP = onDeck; fromQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, tr.rotation.y + HEAD_U, 0)); }
+      if (k < 3) setSectionLying(k); else setNacelleYard();
+      const toP = obj.position.clone(), toQ = obj.quaternion.clone();
+      if (lt < 0.35) { obj.position.copy(fromP); obj.quaternion.copy(fromQ); continue; }
+      const u = seg(lt, 0.35, 0.8);
+      const up = fromP.clone().setY(fromP.y + 4), up2 = toP.clone().setY(toP.y + 4);
+      const p = u < 0.25 ? vlerp(fromP, up, ease(u / 0.25)) : u < 0.8 ? swingPath(C100(), up, up2, ease((u - 0.25) / 0.55)) : vlerp(up2, toP, ease((u - 0.8) / 0.2));
+      obj.position.copy(p); obj.quaternion.copy(fromQ).slerp(toQ, ease(seg(u, 0.25, 0.8)));
+      const ctr = k < 3 ? p.clone().add(new THREE.Vector3(0, 1, 0).applyQuaternion(obj.quaternion).multiplyScalar(SEC_LEN / 2)) : p.clone();
+      aimCrane(crane100, ctr.clone().add(new THREE.Vector3(0, 3.2, 0)), 3); showUnder(ctr, 3); craneUsed = true;
+    }
+    if (!craneUsed) { aimCrane(crane100, rest100(C100()), 4); underLoad.visible = false; }
+    setCrew([[-30, 17, 'ゲート誘導員'], [-10, 15.5, '誘導員'], [-2, 13, '玉掛'], [4, 15, '合図']]);
+  } });
+S({ date: '2026-10-28', stage: '部材搬入', t: 'タワー・ナセル付属部品の取付、電気設備の搬入', d: '仮置きしたタワー・ナセルに付属部品を取付。電気設備（キュービクル・PCS 盤）を搬入。ブレードも 10/28 搬入の予定だが、配置図ではブレード仮置場が 100t の位置と重なるため、この再現では建込みの後に仮置き', src: SRC_W, assume: true, dur: 9, cam: [[-32, 22, 30], [-6, 4, 8]],
+  run(t) {
+    trailers.forEach(x => x.visible = false); [0, 1, 2].forEach(setSectionLying); setNacelleYard(); underLoad.visible = false; placeCrane(crane100, L.crane100a, true, true); aimCrane(crane100, rest100(C100()), 4);
+    unic.visible = t < 0.95; drive(unic, IN([-16, 10], [-12, 3]), seg(t, 0.1, 0.6));
+    cubicle.visible = pcs.visible = t > 0.6; at(cubicle, -11, 2.2, 1.4); at(pcs, -11, 4.6, 1.4);
+    setCrew([[0, 9.5, '部品取付'], [3, 12.5, '部品取付'], [8, 12, '']]);
+  } });
+S({ date: '2026-10-29', stage: '建方', t: '250t クレーン組立・電気設備設置', d: '250t オールテレーンが入場し、敷鉄板の上でアウトリガーを最大張出し・ブームを起こす。100t でキュービクルと PCS 盤を電気室基礎に据付（10/29〜30）', src: SRC_W + '／クレーン作業計画書', dur: 16, cam: [[-30, -24, 26], [2, 2, 4]],
+  run(t) {
+    unic.visible = false; placeCrane(crane100, L.crane100a, true, true);
+    showCrane(crane250, true);
+    if (t < 0.45) { const p = pathAt(IN([-20, ROAD_B - 1], [0, 13], [L.crane250[0], L.crane250[1] + 9], L.crane250), t / 0.45); at(crane250.g, p.a, p.b); crane250.g.rotation.y = p.head; stowCrane(crane250); }
+    else { placeCrane(crane250, L.crane250, true, true); crane250.outs.scale.z = lerp(0.4, 1, seg(t, 0.45, 0.6)); crane250.zone.visible = t > 0.6; aimCrane(crane250, vlerp(C250().add(new THREE.Vector3(6, 3, 0)), rest250(), ease(seg(t, 0.6, 1))), 4); }
+    cubicle.visible = pcs.visible = true;
+    SITE.updateWorldMatrix(true, false);
+    const toW = v => SITE.localToWorld(v.clone());
+    const qb0 = toW(new THREE.Vector3(-11, 1.4, 2.2)), pc0 = toW(new THREE.Vector3(-11, 1.4, 4.6)), qbT = toW(QB_L), pcT = toW(PCS_L);
+    const u1 = seg(t, 0.1, 0.5), u2 = seg(t, 0.5, 0.9);
+    const lift = (a, b, u) => { const p = swingPath(C100(), a, b, ease(u)); p.y += 3 * Math.sin(Math.PI * u); return p; };
+    const qb = u1 <= 0 ? qb0 : u1 < 1 ? lift(qb0, qbT, u1) : qbT, pc = u2 <= 0 ? pc0 : u2 < 1 ? lift(pc0, pcT, u2) : pcT;
+    cubicle.position.copy(SITE.worldToLocal(qb.clone())); pcs.position.copy(SITE.worldToLocal(pc.clone()));
+    const hookOn = t < 0.5 ? qb : pc;
+    if (t > 0.1 && t < 0.9) { aimCrane(crane100, hookOn.clone().add(new THREE.Vector3(0, 1.6, 0)), 3); showUnder(hookOn, 2); } else { aimCrane(crane100, rest100(C100()), 4); underLoad.visible = false; }
+    setCrew([[-9.5, -3, '据付'], [-5, 0.8, '合図'], [14, 4, '合図'], [5, -4, '']]);
+  } });
+
+// ---- タワー建て込み・ナセル取付（10/30〜31） ----
+{
+  const c250 = C250(), c100 = C100();
+  const keep = () => { placeCrane(crane250, L.crane250, true, true); placeCrane(crane100, L.crane100a, true, true); cubicle.visible = pcs.visible = true; cubicle.position.copy(QB_L); pcs.position.copy(PCS_L); };
+  for (let k = 0; k < 3; k++) {
+    const nm = ['下段', '中段', '上段'][k], s = sections[k];
+    const base = { date: k < 2 ? '2026-10-30' : '2026-10-31', stage: '建方', src: SRC_W + '（10/30〜31 タワー建て込み・ナセル取付）／クレーン作業計画書', cam: [[-52, -18, 36], [2, 4, 14]] };
+    const B0 = () => { setSectionLying(k); return s.position.clone(); };
+    const tilt = t => {   // 吊り起こしの途中の姿勢（下端 B と向き）
+      const b0 = B0(), e = ease(t), ang = e * Math.PI / 2;
+      const B = b0.clone().add(new THREE.Vector3(0, lerp(0, 0.6, Math.min(1, t * 3)), 0)).add(towerAxisLying.clone().multiplyScalar(lerp(0, SEC_LEN * 0.55, e)));
+      const dir = towerAxisLying.clone().multiplyScalar(Math.cos(ang)).add(new THREE.Vector3(0, Math.sin(ang), 0));
+      return { B, dir, ang };
+    };
+    S(Object.assign({}, base, { t: nm + 'タワー（11.76m）玉掛け', d: '250t 主巻を上端、100t を下端に玉掛け', dur: 4,
+      run(t) { keep(); const b0 = B0(), T0 = b0.clone().add(towerAxisLying.clone().multiplyScalar(SEC_LEN)), e = ease(t);
+        aimCrane(crane250, vlerp(rest250(), T0.clone().add(new THREE.Vector3(0, 0.8, 0)), e), 4); aimCrane(crane100, vlerp(rest100(c100), b0.clone().add(new THREE.Vector3(0, 0.8, 0)), e), 4); underLoad.visible = false;
+        setCrew([[-3, 13, '玉掛'], [5, 15, '玉掛'], [-6, -6, '合図'], [-10, 8, '介錯']]); } }));
+    S(Object.assign({}, base, { t: nm + 'タワー 吊り起こし（相吊り）', d: '250t が上端を巻き上げ、100t が下端を介錯（地面に付けない）', dur: 9,
+      run(t) { keep(); const { B, dir, ang } = tilt(t);
+        s.position.copy(B); s.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+        const T = B.clone().add(dir.clone().multiplyScalar(SEC_LEN));
+        aimCrane(crane250, T.clone().add(new THREE.Vector3(0, 0.6, 0)), 4); aimCrane(crane100, B.clone().add(new THREE.Vector3(0, 0.6, 0)), 3);
+        showUnder(B.clone().lerp(T, 0.5), 3 + 4 * Math.cos(ang)); } }));
+    S(Object.assign({}, base, { t: nm + 'タワー 巻き上げ・旋回・据付', d: k === 0 ? '介錯を外して旋回し、アンカーボルトに合わせて静かに下ろす' : '介錯を外して旋回し、下の段のフランジに合わせて下ろす', dur: 14,
+      run(t) { keep();
+        const Bv = tilt(1).B, goal = new THREE.Vector3(0, PED_TOP + k * SEC_LEN, 0), clear = goal.y + 1.5;
+        const u0 = seg(t, 0, 0.15), up = seg(t, 0.15, 0.4), sw = seg(t, 0.4, 0.75), dn = seg(t, 0.75, 1);
+        aimCrane(crane100, vlerp(Bv.clone().add(new THREE.Vector3(0, 0.6, 0)), rest100(c100), ease(u0)), 4);
+        const lifted = Bv.clone(); lifted.y = lerp(Bv.y, clear, ease(up));
+        let p = sw > 0 ? swingPath(c250, lifted, goal.clone().setY(clear), ease(sw)) : lifted;
+        if (dn > 0) p = new THREE.Vector3(0, lerp(clear, goal.y, ease(dn)), 0);
+        s.position.copy(p); s.quaternion.identity(); aimCrane(crane250, p.clone().add(new THREE.Vector3(0, SEC_LEN + 0.6, 0)), 4); showUnder(p, 3);
+        setCrew([[-6, -6, '合図'], [2.4, 2.4, '据付', k === 0 ? PED_TOP : 0]]);
+      } }));
+    S(Object.assign({}, base, { t: 'ボルト締付け・玉掛け外し', d: '仮締め後に玉掛けを外す（本締めは別途）', dur: 3,
+      run(t) { keep(); setSectionStood(k); aimCrane(crane250, vlerp(new THREE.Vector3(0, PED_TOP + (k + 1) * SEC_LEN + 0.6, 0), rest250(), ease(t)), 4); aimCrane(crane100, rest100(c100), 4); underLoad.visible = false; } }));
+  }
+  const nb = { date: '2026-10-31', stage: '建方', src: SRC_W + '（ナセル取付）／クレーン作業計画書', cam: [[-56, -14, 42], [2, 4, 20]] };
+  S(Object.assign({}, nb, { t: 'ナセル 玉掛け・巻き上げ・旋回', d: 'タワー頂部（地上約35.8m）の上まで巻き上げて旋回', dur: 14,
+    run(t) { keep(); setNacelleYard(); const N0 = nac.g.position.clone();
+      const up = seg(t, 0.15, 0.55), sw = seg(t, 0.55, 1);
+      const p = N0.clone(); p.y = lerp(N0.y, TOWER_TOP + 1.5, ease(up));
+      const q = sw > 0 ? swingPath(c250, p, new THREE.Vector3(0, TOWER_TOP + 1.5, 0), ease(sw)) : p;
+      if (t < 0.15) { aimCrane(crane250, vlerp(rest250(), N0.clone().add(new THREE.Vector3(0.8, 4.6, 0)), ease(t / 0.15)), 3); underLoad.visible = false; }
+      else { nac.g.position.copy(q); aimCrane(crane250, q.clone().add(new THREE.Vector3(0.8, 4.6, 0)), 3); showUnder(q, 3.5); }
+      setCrew([[-6, -6, '合図'], [8, 13, '玉掛']]); } }));
+  S(Object.assign({}, nb, { t: 'ナセル 据付', d: 'ヨー軸受けをタワー頂部のフランジに合わせてボルト締付け', dur: 5,
+    run(t) { keep(); const y = lerp(TOWER_TOP + 1.5, TOWER_TOP, ease(t)); nac.g.visible = true; nac.g.position.set(0, y, 0); nac.g.rotation.set(0, NAC_YAW, 0); aimCrane(crane250, new THREE.Vector3(0.8, y + 4.6, 0), 3); showUnder(nac.g.position, 3.5); } }));
+}
+S({ date: '2026-10-31', stage: '建方', t: '250t クレーン解体・搬出', d: 'ブームを格納し、アウトリガーを畳んで退場', src: SRC_W, dur: 10, cam: [[-36, 30, 34], [-4, 6, 10]],
+  run(t) { setNacelleTop(); underLoad.visible = false; placeCrane(crane100, L.crane100a, true, true); aimCrane(crane100, rest100(C100()), 4);
+    if (t < 0.4) { placeCrane(crane250, L.crane250, true, true); aimCrane(crane250, vlerp(rest250(), C250().add(new THREE.Vector3(5, 3, 0)), ease(t / 0.4)), 4); crane250.outs.scale.z = lerp(1, 0.4, seg(t, 0.25, 0.4)); }
+    else { const p = pathAt([L.crane250, [L.crane250[0], L.crane250[1] + 9], [0, 13], [-20, ROAD_B - 1], [-150, ROAD_B]], seg(t, 0.4, 1)); showCrane(crane250, true); at(crane250.g, p.a, p.b); crane250.g.rotation.y = p.head; stowCrane(crane250); }
+    if (t >= 1) showCrane(crane250, false);
+    setCrew([[-30, 17, 'ゲート誘導員'], [4, 9, '誘導員']]); } });
+
+// ---- ブレード取付（日付は資料に無し。高所作業車計画書の内容） ----
+{
+  const hubW = () => { const p = new THREE.Vector3(); nac.hub.getWorldPosition(p); return p; };
+  const hubSide = h => h.clone().add(V.clone().multiplyScalar(1.6)).add(new THREE.Vector3(0, -1.2, 0));
+  const placeAerial = () => { aerial.g.visible = aerial.basket.visible = true; at(aerial.g, ...L.aerial); aerial.g.rotation.y = Math.PI / 2; };
+  const parkAerialBoom = () => aimAerial(aerial.g.localToWorld(new THREE.Vector3(-8, 5, 0)));
+  S({ date: '2026-11月', stage: 'ブレード', t: 'ブレード搬入・100t 移設・高所作業車 配置', d: 'ブレード 3 枚（18.18m）を仮置場へ。100t を移設し、40m 高所作業車を 250t の跡に配置（日付は提出書類に無し）', src: 'クレーン作業計画書（ブレード取付）／高所作業車作業計画書', assume: true, dur: 14, cam: [[-46, 32, 30], [-8, 6, 6]],
+    run(t) {
+      showCrane(crane250, false); setNacelleTop(); yardTower.visible = false; yardBlade.visible = true; plates100b.visible = true;
+      const mv = seg(t, 0, 0.35);
+      if (mv < 1) { const p = pathAt([L.crane100a, [-10, 13], L.crane100b], mv); showCrane(crane100, true); at(crane100.g, p.a, p.b); crane100.g.rotation.y = p.head; stowCrane(crane100); }
+      else { placeCrane(crane100, L.crane100b, false, false); aimCrane(crane100, rest100(C100B()), 4); }
+      plates100a.visible = t < 0.4;
+      const tr = trailers[0], lt = seg(t, 0.3, 0.98); tr.visible = lt > 0 && lt < 1;
+      if (lt < 0.4) drive(tr, IN([-25, ROAD_B - 1], [-24, 10]), lt / 0.4); else drive(tr, [[-24, 10], [-25, ROAD_B + 1], [-150, ROAD_B + 1]], seg(lt, 0.85, 1));
+      blades.forEach((b, i) => {
+        if (b.parent !== scene) scene.attach(b);
+        b.visible = lt > 0;
+        if (lt > 0.45 + i * 0.13 || t >= 1) setBladeYard(i);
+        else if (lt > 0) { b.position.copy(deckPoint(tr, BLADE_LEN / 2 - 2, 0.4 + i * 0.6)); b.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), deckDir(tr).negate()); }
+      });
+      const as = seg(t, 0.5, 0.85); aerial.g.visible = aerial.basket.visible = t > 0.5;
+      if (as < 1) { const ap = pathAt(IN([-10, 15], [L.aerial[0], L.aerial[1] + 9], L.aerial), as); at(aerial.g, ap.a, ap.b); aerial.g.rotation.y = ap.head; } else placeAerial();
+      parkAerialBoom();
+      setCrew([[-30, 17, 'ゲート誘導員'], [-12, 10, '玉掛']]);
+    } });
+  for (let i = 0; i < 3; i++) {
+    const holdOff = 6.5;
+    const base = { date: '2026-11月', stage: 'ブレード', src: 'クレーン作業計画書（ブレード取付／介錯）／高所作業車作業計画書（作業床高 40m・360kg）', cam: [[-56, 10, 30], [0, 6, 25]] };
+    const prep = () => {
+      showCrane(crane250, false); yardBlade.visible = true; plates100b.visible = true; plates100a.visible = false; yardTower.visible = false;
+      placeCrane(crane100, L.crane100b, false, false); setNacelleTop(); placeAerial();
+      nac.hub.rotation.x = Math.PI / 2 - i * Math.PI * 2 / 3; nac.hub.updateWorldMatrix(true, true);
+      for (let j = 0; j < 3; j++) { if (j < i) attachBladeToHub(j); else setBladeYard(j); }
+      const Y0 = blades[i].position.clone(), q0 = blades[i].quaternion.clone();
+      const goalRoot = hubW().add(V.clone().multiplyScalar(2.2)), goalC = goalRoot.clone().add(V.clone().multiplyScalar(holdOff));
+      const qG = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), V).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2));
+      return { Y0, q0, goalRoot, goalC, qG };
+    };
+    S(Object.assign({}, base, { t: (i + 1) + '枚目 ブレード 吊り上げ・旋回', d: '100t でブレードを水平吊り（両端に介錯ロープ）、ハブの高さ（地上約38m）へ', dur: 13,
+      run(t) {
+        const c = prep(), b = blades[i];
+        const start = c.Y0.clone().add(V.clone().multiplyScalar(holdOff));
+        const up = seg(t, 0.15, 0.55), sw = seg(t, 0.55, 1);
+        const lifted = start.clone(); lifted.y = lerp(start.y, c.goalC.y, ease(up));
+        const ctr = sw > 0 ? swingPath(C100B(), lifted, c.goalC, ease(sw)) : lifted;
+        b.quaternion.copy(c.q0).slerp(c.qG, ease(sw));
+        const axis = new THREE.Vector3(0, 1, 0).applyQuaternion(b.quaternion);
+        b.position.copy(ctr).sub(axis.clone().multiplyScalar(holdOff));
+        aimCrane(crane100, t < 0.15 ? vlerp(rest100(C100B()), start.clone().add(new THREE.Vector3(0, 1.6, 0)), ease(t / 0.15)) : ctr.clone().add(new THREE.Vector3(0, 1.6, 0)), 3);
+        aimAerial(hubSide(hubW())); if (t > 0.15) showUnder(ctr, 9); else underLoad.visible = false;
+        setCrew([[-14, 3, '介錯'], [-12, 10, '介錯'], [-6, -6, '合図']]);
+      } }));
+    S(Object.assign({}, base, { t: (i + 1) + '枚目 ブレード 取付', d: '高所作業車の作業床から翼根ボルトをハブに合わせて締付け', dur: 6,
+      run(t) {
+        const c = prep(), b = blades[i];
+        b.quaternion.copy(c.qG); const axis = new THREE.Vector3(0, 1, 0).applyQuaternion(b.quaternion);
+        const root = vlerp(c.goalRoot, hubW().add(V.clone().multiplyScalar(1.3)), ease(t)); b.position.copy(root);
+        aimCrane(crane100, root.clone().add(axis.clone().multiplyScalar(holdOff)).add(new THREE.Vector3(0, 1.6, 0)), 3); aimAerial(hubSide(hubW()));
+        showUnder(root.clone().add(axis.clone().multiplyScalar(holdOff)), 9);
+        if (t >= 1) attachBladeToHub(i);
+      } }));
+    S(Object.assign({}, base, { t: i < 2 ? 'ロータを 120° 回して次の取付面へ' : '玉掛け外し', d: i < 2 ? '次の取付面を水平（100t 側）に向ける' : '100t の玉掛けを外す', dur: i < 2 ? 5 : 3,
+      run(t) {
+        prep(); for (let j = 0; j <= i; j++) attachBladeToHub(j);
+        nac.hub.rotation.x = Math.PI / 2 - (i + (i < 2 ? ease(t) : 0)) * Math.PI * 2 / 3;
+        aimCrane(crane100, vlerp(hubW().add(V.clone().multiplyScalar(8)).add(new THREE.Vector3(0, 1.6, 0)), rest100(C100B()), ease(t)), 3);
+        aimAerial(hubSide(hubW())); underLoad.visible = false;
+      } }));
+  }
+  S({ date: '完成', stage: '完成', t: '風車 完成', d: '高所作業車・100t が退場し、ロータが回る（システム容量 330kW）', src: '週間工程表（システム容量）', dur: 14, cam: [[-64, -20, 30], [0, 0, 20]],
+    run(t) {
+      setNacelleTop(); for (let j = 0; j < 3; j++) attachBladeToHub(j);
+      const out = seg(t, 0, 0.5);
+      if (out < 1) {
+        const p = pathAt([L.crane100b, [-10, 13], [-25, ROAD_B - 1], [-150, ROAD_B]], out); showCrane(crane100, true); at(crane100.g, p.a, p.b); crane100.g.rotation.y = p.head; stowCrane(crane100);
+        const q = pathAt([L.aerial, [L.aerial[0], L.aerial[1] + 9], [-10, 15], [-25, ROAD_B], [-150, ROAD_B]], out); at(aerial.g, q.a, q.b); aerial.g.rotation.y = q.head; aerial.g.visible = aerial.basket.visible = true; parkAerialBoom();
+      } else { showCrane(crane100, false); aerial.g.visible = aerial.basket.visible = false; }
+      plates250.visible = plates100b.visible = out < 0.6; yardBlade.visible = false;
+      nac.hub.rotation.x = Math.PI / 2 - 2 * Math.PI * 2 / 3 - Math.max(0, t - 0.5) * 6;
+      setCrew([]);
+    } });
+}
+
+// ===================================================================================
+// 再生
+// ===================================================================================
+let idx = 0, tt = 0, playing = true, speed = 2, autoCam = true, labelsOn = true, view = '';
+const WD = '日月火水木金土';
+function fmtDate(d) { const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/); if (!m) { const k = d.match(/^(\d{4})-(\d{2})-(.+)$/); return k ? k[1] + '年' + (+k[2]) + '月' + k[3] : d.replace(/^(\d{4})-/, '$1年'); } const dt = new Date(+m[1], +m[2] - 1, +m[3]); return m[1] + '年' + (+m[2]) + '月' + (+m[3]) + '日（' + WD[dt.getDay()] + '）'; }
+const dateText = s => s.dateEnd ? fmtDate(s.date) + ' 〜 ' + fmtDate(s.dateEnd).replace(/^\d{4}年/, '') : fmtDate(s.date);
+function showStep() {
+  const s = steps[idx];
+  document.getElementById('dateT').textContent = dateText(s);
+  document.getElementById('stageT').textContent = s.stage + '　（' + (idx + 1) + ' / ' + steps.length + '）';
+  document.getElementById('stepT').textContent = s.t;
+  document.getElementById('stepD').textContent = s.d || '';
+  const se = document.getElementById('stepS'); se.textContent = (s.assume ? '推測を含む　' : '') + '出典: ' + (s.src || ''); se.className = 's' + (s.assume ? ' assume' : '');
+}
+function jump(n, t = 0) {
+  n = THREE.MathUtils.clamp(n, 0, steps.length - 1);
+  resetAll();
+  for (let i = 0; i < n; i++) steps[i].run(1);
+  idx = n; tt = t; steps[idx].run(tt); showStep();
+}
+const totalDur = steps.reduce((s, x) => s + x.dur, 0);
+const track = document.getElementById('track'), months = document.getElementById('months');
+{ let acc = 0, lastStage = '', lastX = -99;
+  steps.forEach(s => { const x = acc / totalDur * 100; const tk = document.createElement('div'); tk.className = 'tick' + (s.stage !== lastStage ? ' major' : ''); tk.style.left = x + '%'; track.appendChild(tk);
+    if (s.stage !== lastStage) { if (x - lastX > 7) { const sp = document.createElement('span'); sp.style.left = x + '%'; const m = s.date.match(/^\d{4}-(\d{2})-(\d{2})$/); sp.textContent = s.stage + (m ? ' ' + (+m[1]) + '/' + (+m[2]) : ''); months.appendChild(sp); lastX = x; } lastStage = s.stage; }
+    s.start = acc; acc += s.dur; }); }
+track.onclick = e => { const r = track.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * totalDur; let i = steps.findIndex(s => x >= s.start && x < s.start + s.dur); if (i < 0) i = steps.length - 1; jump(i, 0); };
+document.getElementById('prev').onclick = () => jump(idx - (tt < 0.15 ? 1 : 0), 0);
+document.getElementById('next').onclick = () => jump(idx + 1, 0);
+const playBtn = document.getElementById('play');
+playBtn.onclick = () => { if (!playing && idx === steps.length - 1 && tt >= 1) jump(0, 0); playing = !playing; playBtn.textContent = playing ? '一時停止' : '再生'; };
+document.querySelectorAll('[data-speed]').forEach(b => b.onclick = () => { speed = +b.dataset.speed; document.querySelectorAll('[data-speed]').forEach(x => x.classList.toggle('on', x === b)); });
+const camBtn = document.getElementById('autocam');
+const setAuto = on => { autoCam = on; camBtn.classList.toggle('on', on); if (on) { view = ''; document.querySelectorAll('[data-view]').forEach(x => x.classList.remove('on')); controls.enabled = true; } };
+camBtn.onclick = () => setAuto(!autoCam);
+controls.addEventListener('start', () => setAuto(false));
+document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => {
+  setAuto(false); view = b.dataset.view; document.querySelectorAll('[data-view]').forEach(x => x.classList.toggle('on', x === b));
+  if (view === 'all') { camera.position.set(-66, 46, -16); controls.target.set(2, 12, 4); }
+  if (view === 'top') { camera.position.set(-1, 110, 4.5); controls.target.set(-1, 0, 4); }
+  controls.enabled = view !== 'op';
+});
+const menuBtn = document.getElementById('menuBtn'), head = document.getElementById('head');
+menuBtn.onclick = () => { const o = head.classList.toggle('open'); menuBtn.classList.toggle('open', o); };
+document.getElementById('tlBtn').onclick = e => { const on = document.body.classList.toggle('tl-on'); e.target.textContent = on ? '工程バーを隠す' : '工程バーを出す'; };
+document.getElementById('labelsBtn').onclick = e => { labelsOn = !labelsOn; e.target.textContent = labelsOn ? '名前を隠す' : '名前を出す'; };
+document.getElementById('infoBtn').onclick = e => { const i = document.getElementById('info'), narrow = innerWidth <= 700;
+  const shown = narrow ? i.classList.toggle('force') : !i.classList.toggle('hide'); e.target.textContent = shown ? '説明を隠す' : '説明を出す'; };
+if (innerWidth <= 700) document.getElementById('infoBtn').textContent = '説明を出す';
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); labelRenderer.setSize(innerWidth, innerHeight); });
+
+// 確認用: ?step=12&t=0.5&pause=1&snap=1
+const qs = new URLSearchParams(location.search);
+jump(+(qs.get('step') || 0), +(qs.get('t') || 0));
+if (qs.get('pause')) { playing = false; playBtn.textContent = '再生'; }
+const camGoal = new THREE.Vector3(), tgtGoal = new THREE.Vector3();
+// おまかせ視点: 場面ごとの視点から、注視点を中心に引いて少し高くする（2026-10-18 小川さん「もう少し引き気味に」）。縦長の画面ではさらに引く
+const camOf = s => {
+  tgtGoal.copy(W(s.cam[1][0], s.cam[1][1], s.cam[1][2]));
+  const d = W(s.cam[0][0], s.cam[0][1], s.cam[0][2]).sub(tgtGoal), zoom = innerWidth < innerHeight ? 2.2 : 1.55;
+  d.multiplyScalar(zoom); d.y = Math.max(d.y, 0) + 6 * zoom;
+  camGoal.copy(tgtGoal).add(d);
+};
+camOf(steps[idx]); camera.position.copy(camGoal); controls.target.copy(tgtGoal);
+if (qs.get('selftest')) {   // 確認用: 全場面を t=0.5 と 1 で再現して例外が出ないか
+  const errs = []; for (let i = 0; i < steps.length; i++) for (const t of [0.5, 1]) { try { jump(i, t); } catch (e) { errs.push(i + '@' + t + ': ' + e.message); } }
+  document.title = 'SELFTEST ' + (errs.length ? 'NG ' + errs.join(' | ') : 'OK ' + steps.length); jump(0, 0);
+}
+if (qs.get('view')) document.querySelector('[data-view="' + qs.get('view') + '"]').click();
+
+const clock = new THREE.Clock();
+function tick() {
+  const dt = Math.min(clock.getDelta(), 0.1);
+  if (playing) {
+    tt += dt * speed / steps[idx].dur;
+    if (tt >= 1) {
+      steps[idx].run(1);
+      if (idx < steps.length - 1) { idx++; tt = 0; showStep(); }
+      else { tt = 1; playing = false; playBtn.textContent = '再生'; }
+    }
+    steps[idx].run(Math.min(tt, 1));
+  }
+  document.getElementById('fill').style.width = ((steps[idx].start + Math.min(tt, 1) * steps[idx].dur) / totalDur * 100).toFixed(2) + '%';
+  if (view === 'op') {
+    const cr = crane250.g.visible ? crane250 : crane100;
+    const eye = new THREE.Vector3(1.2, 2.2, cr.o.w / 2 - 0.45); cr.turret.localToWorld(eye); camera.position.copy(eye); camera.lookAt(cr.hook.position);
+  } else {
+    if (autoCam) { camOf(steps[idx]); const k = 1 - Math.pow(0.45, dt); camera.position.lerp(camGoal, k); controls.target.lerp(tgtGoal, k); }
+    controls.update();
+  }
+  labels.forEach(l => { let o = l.parent, on = labelsOn; while (on && o) { if (!o.visible) on = false; o = o.parent; } l.visible = on; });
+  renderer.render(scene, camera); labelRenderer.render(scene, camera);
+  requestAnimationFrame(tick);
+}
+tick();
+window.__steps = steps.length;
+</script>
+</body>
+</html>
