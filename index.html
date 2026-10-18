@@ -13,6 +13,8 @@
   #menuBtn svg { display: inline-block; vertical-align: middle; margin-right: 6px; fill: currentColor; }
   #menuBtn span { vertical-align: middle; }
   #menuBtn.open { background: #1f2f4f; color: #fff; }
+  #walkBtn { left: 112px; top: 12px; height: 38px; padding: 0 14px; z-index: 3; color: #1f2f4f; background: #fff; border: 1px solid #1f2f4f; font-size: 13px; font-weight: 600; }
+  #walkBtn.on { background: #1f2f4f; color: #fff; }
   #head { left: 12px; top: 58px; width: 350px; padding: 10px 12px; display: none; z-index: 3; }
   #head.open { display: block; }
   #tl { display: none; } body.tl-on #tl { display: block; }
@@ -60,11 +62,12 @@
   /* スマホ（幅 700px 以下）: 説明は畳み、パネルを小さく */
   @media (max-width: 700px) {
     #menuBtn { left: 6px; top: 6px; height: 34px; line-height: 32px; font-size: 12px; }
+    #walkBtn { left: 96px; top: 6px; height: 34px; padding: 0 10px; font-size: 12px; }
     #head { left: 6px; right: auto; top: 46px; width: calc(100vw - 12px); box-sizing: border-box; padding: 6px 8px; }
     #head h1 { font-size: 13px; } #head .sub { display: none; }
     .btns { gap: 4px; margin-top: 5px; } button { font-size: 11px; padding: 3px 7px; }
     #info { display: none; } #info.force { display: block; left: 6px; right: 6px; top: auto; bottom: 120px; width: auto; max-height: 45%; }
-    #now { left: 118px; right: auto; width: calc(100vw - 124px); box-sizing: border-box; transform: none; top: 6px; bottom: auto; min-width: 0; padding: 4px 8px; }
+    #now { left: 152px; right: auto; width: calc(100vw - 158px); box-sizing: border-box; transform: none; top: 6px; bottom: auto; min-width: 0; padding: 4px 8px; }
     #head.open ~ #now { display: none; }
     body.tl-on #step { bottom: 52px !important; } #step { bottom: 6px !important; }
     #now .date { font-size: 15px; } #now .stage { font-size: 11px; }
@@ -81,6 +84,7 @@
 <div id="app"></div>
 
 <button id="menuBtn" class="panel" aria-label="メニュー" title="メニュー"><svg width="20" height="16" viewBox="0 0 20 16" aria-hidden="true"><rect x="0" y="0" width="20" height="3" rx="1"/><rect x="0" y="6.5" width="20" height="3" rx="1"/><rect x="0" y="13" width="20" height="3" rx="1"/></svg><span>メニュー</span></button>
+<button id="walkBtn" class="panel" title="作業員の目線で現場を歩く">操作</button>
 <div id="head" class="panel">
   <h1>久慈第1風力発電所 建設工事　施工シミュレーション</h1>
   <div class="sub">着工（仮設事務所 7/17）から完成まで。提出書類一式（週間工程表・各作業計画書・配筋図ほか）をもとにした概略モデル</div>
@@ -98,7 +102,6 @@
     <button data-view="all">全体</button>
     <button data-view="top">真上</button>
     <button data-view="op">運転席</button>
-    <button data-view="walk">歩いて見る</button>
     <button id="labelsBtn">名前を出す</button>
     <button id="infoBtn">説明を隠す</button>
     <button id="tlBtn">工程バーを出す</button>
@@ -1254,11 +1257,16 @@ document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => {
   setAuto(false); view = b.dataset.view; document.querySelectorAll('[data-view]').forEach(x => x.classList.toggle('on', x === b));
   if (view === 'all') { camera.position.set(-66, 46, -16); controls.target.set(2, 12, 4); }
   if (view === 'top') { camera.position.set(-1, 110, 4.5); controls.target.set(-1, 0, 4); }
-  if (view === 'walk') startWalk();
-  controls.enabled = view !== 'op' && view !== 'walk';
+  controls.enabled = view !== 'op';
 });
 // 歩いて見る: 作業員と同じ目の高さ・歩く速さで動く（2026-10-18 小川さん）
-const EYE = 1.6, walk = { yaw: 0, pitch: 0, fast: false, keys: new Set() };
+const EYE = 1.6, walk = { yaw: 0, pitch: 0, fast: true, keys: new Set() };   // 既定は小走り（小川さん）
+const walkBtn = document.getElementById('walkBtn');
+walkBtn.onclick = () => {   // 「操作」: 押すと歩いて見る、もう一度押すとおまかせ視点に戻る
+  if (view === 'walk') { setAuto(true); return; }
+  setAuto(false); view = 'walk'; document.querySelectorAll('[data-view]').forEach(x => x.classList.remove('on'));
+  controls.enabled = false; startWalk();
+};
 function startWalk() {
   const p = W(-14, -18, EYE), look = W(0, 0, 6); camera.position.copy(p);
   walk.yaw = Math.atan2(-(look.x - p.x), -(look.z - p.z)); walk.pitch = Math.atan2(look.y - p.y, Math.hypot(look.x - p.x, look.z - p.z));
@@ -1275,7 +1283,8 @@ walk.sx = 0; walk.sy = 0;
   stick.addEventListener('pointermove', e => { if (e.pointerId === sid) put(e); });
   stick.addEventListener('pointerup', end); stick.addEventListener('pointercancel', end);
   stick.addEventListener('contextmenu', e => e.preventDefault()); }
-runBtn.onclick = () => { walk.fast = !walk.fast; runBtn.classList.toggle('on', walk.fast); };
+runBtn.classList.add('on');
+runBtn.onclick = () => { walk.fast = !walk.fast; runBtn.classList.toggle('on', walk.fast); runBtn.textContent = walk.fast ? '小走り' : '歩く'; };
 const KEYMAP = { ArrowUp: 'fwd', KeyW: 'fwd', ArrowDown: 'back', KeyS: 'back', ArrowLeft: 'turnL', ArrowRight: 'turnR', KeyA: 'left', KeyD: 'right', KeyQ: 'lookup', KeyE: 'lookdn' };
 addEventListener('keydown', e => { if (view === 'walk' && KEYMAP[e.code]) { walk.keys.add(KEYMAP[e.code]); e.preventDefault(); } });
 addEventListener('keyup', e => { if (KEYMAP[e.code]) walk.keys.delete(KEYMAP[e.code]); });
@@ -1335,7 +1344,7 @@ if (qs.get('selftest')) {   // 確認用: 全場面を t=0.5 と 1 で再現し�
   const errs = []; for (let i = 0; i < steps.length; i++) for (const t of [0.5, 1]) { try { jump(i, t); } catch (e) { errs.push(i + '@' + t + ': ' + e.message); } }
   document.title = 'SELFTEST ' + (errs.length ? 'NG ' + errs.join(' | ') : 'OK ' + steps.length); jump(0, 0);
 }
-if (qs.get('view')) document.querySelector('[data-view="' + qs.get('view') + '"]').click();
+if (qs.get('view')) (qs.get('view') === 'walk' ? walkBtn : document.querySelector('[data-view="' + qs.get('view') + '"]')).click();
 
 const clock = new THREE.Clock();
 function tick() {
@@ -1350,7 +1359,9 @@ function tick() {
     runStep(idx, Math.min(tt, 1));
   }
   document.getElementById('fill').style.width = ((steps[idx].start + Math.min(tt, 1) * steps[idx].dur) / totalDur * 100).toFixed(2) + '%';
-  const wk = view === 'walk'; if (stick.style.display !== (wk ? 'block' : 'none')) { stick.style.display = runBtn.style.display = walkHint.style.display = wk ? 'block' : 'none'; if (wk) { walkHint.style.opacity = 1; clearTimeout(walk.ht); walk.ht = setTimeout(() => walkHint.style.opacity = 0, 5000); } }
+  const wk = view === 'walk', fov = wk ? (camera.aspect < 1 ? 85 : 72) : 45;   // 一人称は視野を広く
+  if (camera.fov !== fov) { camera.fov = fov; camera.updateProjectionMatrix(); }
+  walkBtn.classList.toggle('on', wk); if (stick.style.display !== (wk ? 'block' : 'none')) { stick.style.display = runBtn.style.display = walkHint.style.display = wk ? 'block' : 'none'; if (wk) { walkHint.style.opacity = 1; clearTimeout(walk.ht); walk.ht = setTimeout(() => walkHint.style.opacity = 0, 5000); } }
   if (view === 'walk') walkStep(dt);
   else if (view === 'op') {
     const cr = crane250.g.visible ? crane250 : crane100;
