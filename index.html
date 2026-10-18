@@ -401,6 +401,21 @@ function worker() {
   const h = new THREE.Mesh(new THREE.SphereGeometry(0.17, 12, 8), MAT.helmet); h.position.y = 1.5; g.add(h); return g;
 }
 const crew = []; for (let i = 0; i < 8; i++) { const w = worker(); SITE.add(w); const l = label(w, '', '', 2.1); crew.push({ w, l }); }
+// 介錯ロープ: 吊荷の点から、少し離れた地上の作業員の手元まで線を引く（2026-10-18 小川さん「介錯ロープが作業員から伸びてない」）
+const tagLines = [0, 1].map(() => { const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), new THREE.LineBasicMaterial({ color: 0xd9a400 })); l.visible = false; scene.add(l); return l; });
+let tagQueue = [];
+/** 介錯を付ける: 作業員 i を、吊荷の点 pt の真下から dir 方向へ dist m 離れた所に立たせ、手元から pt へロープを引く（場面の run の中で呼ぶ） */
+function tagTo(i, pt, dir, dist) { tagQueue.push({ i, pt: pt.clone(), dir: dir.clone().setY(0).normalize(), dist }); }
+function applyTags() {
+  tagLines.forEach(l => l.visible = false);
+  tagQueue.forEach((q, k) => {
+    const stand = new THREE.Vector3(q.pt.x, 0, q.pt.z).add(q.dir.clone().multiplyScalar(q.dist));
+    const c = crew[q.i]; c.w.visible = true; c.w.position.copy(SITE.worldToLocal(stand.clone())); c.l.element.textContent = '介錯'; c.l.element.style.display = '';
+    const l = tagLines[k]; if (!l) return; l.visible = true; l.geometry.setFromPoints([stand.clone().setY(1.25), q.pt]);
+  });
+  tagQueue = [];
+}
+function runStep(i, t) { tagQueue = []; steps[i].run(t); applyTags(); }
 function setCrew(list) {
   crew.forEach((c, i) => {
     const it = list && list[i]; c.w.visible = !!it;
@@ -660,7 +675,7 @@ function resetAll() {
   [office, toilet, gate, board, roadExt, cage, rebarMain, formMain, pourMain, lowMain, earth, fep, cure, ped, inkLines, stoneMain, leanForm, leanMain,
    elStone, elLeanForm, elLean, elRebar, elForm, elPipes, elPour, elSlab, cubicle, pcs, plates250, plates100a, plates100b, plateStack, yardTower, yardBlade,
    bh07.g, bh02.g, bh01.g, pump, unic, plateTruck, aerial.g, aerial.basket, underLoad, counter, soilPile, ...mixers, ...trailers, ...sections, nac.g].forEach(o => o.visible = false);
-  pump.userData.hose.visible = false;
+  pump.userData.hose.visible = false; tagLines.forEach(l => l.visible = false);
   blades.forEach(b => { if (b.parent !== scene) scene.attach(b); b.visible = false; });
   showCrane(crane250, false); showCrane(crane100, false);
   pitMain.set(0); pitMain.fill.visible = false; pitElec.set(0); pitElec.fill.visible = false;
@@ -814,6 +829,7 @@ S({ date: '2026-10-27', stage: '部材搬入', t: 'タワー・ナセル 搬入�
       obj.position.copy(p); obj.quaternion.copy(fromQ).slerp(toQ, ease(seg(u, 0.25, 0.8)));
       const ctr = k < 3 ? p.clone().add(new THREE.Vector3(0, 1, 0).applyQuaternion(obj.quaternion).multiplyScalar(SEC_LEN / 2)) : p.clone();
       aimCrane(crane100, ctr.clone().add(new THREE.Vector3(0, 3.2, 0)), 3); showUnder(ctr, 3); craneUsed = true;
+      if (u > 0.05 && u < 0.97) tagTo(6, k < 3 ? p.clone() : p.clone().add(new THREE.Vector3(0, 1.2, 0)), ctr.clone().sub(C100()), 7);
     }
     if (!craneUsed) { aimCrane(crane100, rest100(C100()), 4); underLoad.visible = false; }
     setCrew([[-30, 17, 'ゲート誘導員'], [-10, 15.5, '誘導員'], [-2, 13, '玉掛'], [4, 15, '合図']]);
@@ -840,7 +856,7 @@ S({ date: '2026-10-29', stage: '建方', t: '250t クレーン組立・電気設
     const qb = u1 <= 0 ? qb0 : u1 < 1 ? lift(qb0, qbT, u1) : qbT, pc = u2 <= 0 ? pc0 : u2 < 1 ? lift(pc0, pcT, u2) : pcT;
     cubicle.position.copy(SITE.worldToLocal(qb.clone())); pcs.position.copy(SITE.worldToLocal(pc.clone()));
     const hookOn = t < 0.5 ? qb : pc;
-    if (t > 0.1 && t < 0.9) { aimCrane(crane100, hookOn.clone().add(new THREE.Vector3(0, 1.6, 0)), 3); showUnder(hookOn, 2); } else { aimCrane(crane100, rest100(C100()), 4); underLoad.visible = false; }
+    if (t > 0.1 && t < 0.9) { aimCrane(crane100, hookOn.clone().add(new THREE.Vector3(0, 1.6, 0)), 3); showUnder(hookOn, 2); tagTo(6, hookOn.clone().add(new THREE.Vector3(0, -0.8, 0)), hookOn.clone().sub(C100()), 5); } else { aimCrane(crane100, rest100(C100()), 4); underLoad.visible = false; }
     setCrew([[-9.5, -3, '据付'], [-5, 0.8, '合図'], [14, 4, '合図'], [5, -4, '']]);
   } });
 
@@ -877,6 +893,7 @@ S({ date: '2026-10-29', stage: '建方', t: '250t クレーン組立・電気設
         let p = sw > 0 ? swingPath(c250, lifted, goal.clone().setY(clear), ease(sw)) : lifted;
         if (dn > 0) p = new THREE.Vector3(0, lerp(clear, goal.y, ease(dn)), 0);
         s.position.copy(p); s.quaternion.identity(); aimCrane(crane250, p.clone().add(new THREE.Vector3(0, SEC_LEN + 0.6, 0)), 4); showUnder(p, 3);
+        if (t > 0.12 && t < 0.95) tagTo(6, p.clone().add(new THREE.Vector3(0, 0.3, 0)), p.clone().sub(c250).add(new THREE.Vector3(-0.001, 0, 0.001)), 8);
         setCrew([[-6, -6, '合図'], [2.4, 2.4, '据付', k === 0 ? PED_TOP : 0]]);
       } }));
     S(Object.assign({}, base, { t: 'ボルト締付け・玉掛け外し', d: '仮締め後に玉掛けを外す（本締めは別途）', dur: 3,
@@ -889,10 +906,11 @@ S({ date: '2026-10-29', stage: '建方', t: '250t クレーン組立・電気設
       const p = N0.clone(); p.y = lerp(N0.y, TOWER_TOP + 1.5, ease(up));
       const q = sw > 0 ? swingPath(c250, p, new THREE.Vector3(0, TOWER_TOP + 1.5, 0), ease(sw)) : p;
       if (t < 0.15) { aimCrane(crane250, vlerp(rest250(), N0.clone().add(new THREE.Vector3(0.8, 4.6, 0)), ease(t / 0.15)), 3); underLoad.visible = false; }
-      else { nac.g.position.copy(q); aimCrane(crane250, q.clone().add(new THREE.Vector3(0.8, 4.6, 0)), 3); showUnder(q, 3.5); }
+      else { nac.g.position.copy(q); aimCrane(crane250, q.clone().add(new THREE.Vector3(0.8, 4.6, 0)), 3); showUnder(q, 3.5); tagTo(6, q.clone().add(U.clone().multiplyScalar(-2.0)).add(new THREE.Vector3(0, 1.0, 0)), q.clone().sub(c250).add(new THREE.Vector3(-0.001, 0, 0.001)), 10); }
       setCrew([[-6, -6, '合図'], [8, 13, '玉掛']]); } }));
   S(Object.assign({}, nb, { t: 'ナセル 据付', d: 'ヨー軸受けをタワー頂部のフランジに合わせてボルト締付け', dur: 5,
-    run(t) { keep(); const y = lerp(TOWER_TOP + 1.5, TOWER_TOP, ease(t)); nac.g.visible = true; nac.g.position.set(0, y, 0); nac.g.rotation.set(0, NAC_YAW, 0); aimCrane(crane250, new THREE.Vector3(0.8, y + 4.6, 0), 3); showUnder(nac.g.position, 3.5); } }));
+    run(t) { keep(); const y = lerp(TOWER_TOP + 1.5, TOWER_TOP, ease(t)); nac.g.visible = true; nac.g.position.set(0, y, 0); nac.g.rotation.set(0, NAC_YAW, 0); aimCrane(crane250, new THREE.Vector3(0.8, y + 4.6, 0), 3); showUnder(nac.g.position, 3.5);
+      if (t < 0.9) tagTo(6, nac.g.position.clone().add(U.clone().multiplyScalar(-2.0)).add(new THREE.Vector3(0, 1.0, 0)), U.clone().negate(), 10); } }));
 }
 S({ date: '2026-10-31', stage: '建方', t: '250t クレーン解体・搬出', d: 'ブームを格納し、アウトリガーを畳んで退場', src: SRC_W, dur: 10, cam: [[-36, 30, 34], [-4, 6, 10]],
   run(t) { setNacelleTop(); underLoad.visible = false; placeCrane(crane100, L.crane100a, true, true); aimCrane(crane100, rest100(C100()), 4);
@@ -952,6 +970,7 @@ S({ date: '2026-10-31', stage: '建方', t: '250t クレーン解体・搬出', 
         b.position.copy(ctr).sub(axis.clone().multiplyScalar(holdOff));
         aimCrane(crane100, t < 0.15 ? vlerp(rest100(C100B()), start.clone().add(new THREE.Vector3(0, 1.6, 0)), ease(t / 0.15)) : ctr.clone().add(new THREE.Vector3(0, 1.6, 0)), 3);
         aimAerial(hubSide(hubW())); if (t > 0.15) showUnder(ctr, 9); else underLoad.visible = false;
+        if (t > 0.12) { tagTo(6, b.position.clone(), U.clone().negate(), 9); tagTo(7, b.position.clone().add(axis.clone().multiplyScalar(BLADE_LEN - 0.5)), V, 7); }
         setCrew([[-14, 3, '介錯'], [-12, 10, '介錯'], [-6, -6, '合図']]);
       } }));
     S(Object.assign({}, base, { t: (i + 1) + '枚目 ブレード 取付', d: '高所作業車の作業床から翼根ボルトをハブに合わせて締付け', dur: 6,
@@ -961,6 +980,7 @@ S({ date: '2026-10-31', stage: '建方', t: '250t クレーン解体・搬出', 
         const root = vlerp(c.goalRoot, hubW().add(V.clone().multiplyScalar(1.3)), ease(t)); b.position.copy(root);
         aimCrane(crane100, root.clone().add(axis.clone().multiplyScalar(holdOff)).add(new THREE.Vector3(0, 1.6, 0)), 3); aimAerial(hubSide(hubW()));
         showUnder(root.clone().add(axis.clone().multiplyScalar(holdOff)), 9);
+        if (t < 0.95) tagTo(7, root.clone().add(axis.clone().multiplyScalar(BLADE_LEN - 0.5)), V, 7);
         if (t >= 1) attachBladeToHub(i);
       } }));
     S(Object.assign({}, base, { t: i < 2 ? 'ロータを 120° 回して次の取付面へ' : '玉掛け外し', d: i < 2 ? '次の取付面を水平（100t 側）に向ける' : '100t の玉掛けを外す', dur: i < 2 ? 5 : 3,
@@ -1003,8 +1023,8 @@ function showStep() {
 function jump(n, t = 0) {
   n = THREE.MathUtils.clamp(n, 0, steps.length - 1);
   resetAll();
-  for (let i = 0; i < n; i++) steps[i].run(1);
-  idx = n; tt = t; steps[idx].run(tt); showStep();
+  for (let i = 0; i < n; i++) runStep(i, 1);
+  idx = n; tt = t; runStep(idx, tt); showStep();
 }
 const totalDur = steps.reduce((s, x) => s + x.dur, 0);
 const track = document.getElementById('track'), months = document.getElementById('months');
@@ -1062,11 +1082,11 @@ function tick() {
   if (playing) {
     tt += dt * speed / steps[idx].dur;
     if (tt >= 1) {
-      steps[idx].run(1);
+      runStep(idx, 1);
       if (idx < steps.length - 1) { idx++; tt = 0; showStep(); }
       else { tt = 1; playing = false; playBtn.textContent = '再生'; }
     }
-    steps[idx].run(Math.min(tt, 1));
+    runStep(idx, Math.min(tt, 1));
   }
   document.getElementById('fill').style.width = ((steps[idx].start + Math.min(tt, 1) * steps[idx].dur) / totalDur * 100).toFixed(2) + '%';
   if (view === 'op') {
