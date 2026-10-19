@@ -130,6 +130,7 @@
     <tr><td>電気室基礎</td><td>5.9 × 4.0 × 0.6m、箱抜き 450角</td></tr>
     <tr><td>タワー</td><td>11.76m × 3本</td></tr>
     <tr><td>ブレード</td><td>18.18m × 3枚</td></tr>
+    <tr><td>吊り上げ中止</td><td>平均風速 6m/s 以上・雷雨（JW330 施工マニュアル）</td></tr>
     <tr><td>重機</td><td>BH07・BH02・BH01、ポンプ車（100〜160㎥/h）、100t ラフター、250t オールテレーン、40m 高所作業車</td></tr>
   </table>
   <h2>画面の見方</h2>
@@ -443,7 +444,10 @@ function applyTags() {
   });
   tagQueue = [];
 }
-function runStep(i, t) { tagQueue = []; steps[i].run(t); applyTags(); crewAvoid(); }
+const focusRing = new THREE.Mesh(new THREE.TorusGeometry(1, 0.07, 8, 56), new THREE.MeshBasicMaterial({ color: 0x1f2f4f, transparent: true, opacity: 0.85 }));
+focusRing.rotation.x = Math.PI / 2; focusRing.visible = false; scene.add(focusRing);
+function mark(p, r, t = 0) { focusRing.visible = true; focusRing.position.copy(p); const k = r * (1 + 0.06 * Math.sin(t * 40)); focusRing.scale.set(k, k, k); }   // 作業箇所の目印
+function runStep(i, t) { tagQueue = []; focusRing.visible = false; steps[i].run(t); applyTags(); crewAvoid(); }
 function setCrew(list) {
   crew.forEach((c, i) => {
     const it = list && list[i]; c.w.visible = !!it;
@@ -853,6 +857,9 @@ function resetAll() {
 // cam: [[a, b, 高さ], [a, b, 高さ]] = 視点と注視点
 // ===================================================================================
 const SRC_W = '週間工程表（久保更新）';
+const PUBLIC = true;   // 公開版を作るときに true（メーカーのマニュアルの数値を出さない）
+const SRC_M = 'JW330 施工マニュアル（風車建て方編）';
+const num = x => PUBLIC ? '' : x;   // マニュアル由来の数値（社内版だけに出す）
 const steps = [];
 const S = o => steps.push(o);
 
@@ -1005,6 +1012,9 @@ S({ date: '2026-10-27', stage: '部材搬入', t: 'タワー・ナセル 搬入�
     if (!craneUsed) { aimCrane(crane100, rest100(C100()), 4); underLoad.visible = false; }
     setCrew([[-30, 17, 'ゲート誘導員'], [-10, 15.5, '誘導員'], [-2, 13, '玉掛'], [4, 15, '合図']]);
   } });
+S({ date: '2026-10-27', stage: '部材搬入', t: '開梱検収・外観検査', d: 'パッキングリストで型番・数量を確認し、キズ・変形・錆を検査（写真記録）。輸送の養生をはがしてフランジを清掃し、塗装剥げは付属の塗料で補修。タワーは角材の上に置き、当て木で転がりを防ぐ。電気部品は屋内保管、屋外のものは防雨', src: SRC_M + ' 5.2・6.2・6.3.2', dur: 7, cam: [[-26, 24, 22], [-2, 10, 2]],
+  run(t) { trailers.forEach(x => x.visible = false); underLoad.visible = false;
+    setCrew([[-5, 9.5, '外観検査'], [-5, 13.2, '数量確認'], [-9, 6.5, '外観検査'], [2, 16, '記録']]); } });
 S({ date: '2026-10-28', stage: '部材搬入', t: 'タワー・ナセル付属部品の取付、電気設備の搬入', d: '仮置きしたタワー・ナセルに付属部品を取付。電気設備（キュービクル・PCS 盤）を搬入。ブレードも 10/28 搬入の予定だが、配置図ではブレード仮置場が 100t の位置と重なるため、この再現では建込みの後に仮置き', src: SRC_W, assume: true, dur: 9, cam: [[-32, 22, 30], [-6, 4, 8]],
   run(t) {
     trailers.forEach(x => x.visible = false); [0, 1, 2].forEach(setSectionLying); setNacelleYard(); underLoad.visible = false; placeCrane(crane100, L.crane100a, true, true); aimCrane(crane100, rest100(C100()), 4);
@@ -1012,6 +1022,12 @@ S({ date: '2026-10-28', stage: '部材搬入', t: 'タワー・ナセル付属�
     cubicle.visible = pcs.visible = t > 0.6; at(cubicle, -13.5, -8.6, 1.4); at(pcs, -10.2, -8.6, 1.4);
     setCrew([[0, 9.5, '部品取付'], [3, 12.5, '部品取付'], [8, 12, '']]);
   } });
+S({ date: '2026-10-28', stage: '部材搬入', t: 'タワー内装部品の組立（梯子・ケーブル用梯子・作業台）', d: '寝かせたタワーの中に、各段の梯子とケーブル用梯子、作業台を取り付ける。作業者は靴カバーを着用。下段の作業台だけは、ケーブル敷設の後に組む' + num('（梯子・作業台のボルト M12：30N・m）'), src: SRC_M + ' 6.3.3', assume: true, dur: 7, cam: [[-20, 22, 16], [-2, 11, 1]],
+  run(t) { underLoad.visible = false;
+    setCrew([[-1.9, 9.3, '梯子取付', 0.6], [-1.9, 12.1, '梯子取付', 0.6], [-1.9, 14.9, '作業台', 0.6], [-6, 15.5, '部材渡し']]); } });
+S({ date: '2026-10-28', stage: '部材搬入', t: 'ナセル 吊り上げ前の準備', d: '風速計・風向計・航空灯を取付けて密封剤を塗る。ナセルとタワーをつなぐボルトに潤滑油を塗り、タワーケーブルを接続してナセルの中に丸めておく', src: SRC_M + ' 6.4.1・6.4.4', assume: true, dur: 7, cam: [[-24, 18, 14], [-6, 5.5, 2]],
+  run(t) { underLoad.visible = false; mark(W(L.yard1[0] - 7.6, 5.5, 4.2), 1.6, t);
+    setCrew([[-6.1, 5.5, '風速計取付', 3.9], [-9.5, 4, 'ケーブル'], [-3, 3.5, '潤滑']]); } });
 S({ date: '2026-10-29', stage: '建方', t: '250t クレーン組立・電気設備設置', d: '250t オールテレーンが入場し、敷鉄板の上でアウトリガーを最大張出し・ブームを起こす。100t でキュービクルと PCS 盤を電気室基礎に据付（10/29〜30）', src: SRC_W + '／クレーン作業計画書', dur: 16, cam: [[-30, -24, 26], [2, 2, 4]],
   run(t) {
     unic.visible = false; placeCrane(crane100, L.crane100a, true, true);
@@ -1038,6 +1054,9 @@ S({ date: '2026-10-29', stage: '建方', t: '250t クレーン組立・電気設
   const c250 = C250(), c100 = C100();
   const lug = B => B.clone().add(c100.clone().sub(B).setY(0).normalize().multiplyScalar(radiusAt(0) + 1.3)).add(new THREE.Vector3(0, 0.6, 0));
   const keep = () => { placeCrane(crane250, L.crane250, true, true); placeCrane(crane100, L.crane100a, true, true); cubicle.visible = pcs.visible = true; cubicle.position.copy(QB_L); pcs.position.copy(PCS_L); };
+  S({ date: '2026-10-30', stage: '建方', t: 'アンカーボルト検査・基礎の清掃', d: 'アンカープレートの高さ・水平、アンカーボルトの間隔・頂部高さ・余長を確認' + num('（標高差 3mm 未満・水平 1/1000 未満・中心間隔 ±1mm）') + '。ねじ山のコンクリートを落とし、フランジの当たり面を清掃。平均風速 6m/s 以上や雷雨のときは吊り上げを中止', src: SRC_M + ' 5.1・6.1', dur: 7, cam: [[-14, -12, 9], [0, 0, 0.5]],
+    run(t) { keep(); underLoad.visible = false; aimCrane(crane250, rest250(), 4); aimCrane(crane100, rest100(C100()), 4); mark(new THREE.Vector3(0, PED_TOP + 0.08, 0), R_BASE - 0.15, t);
+      setCrew([[1.6, 1.2, '検査', PED_TOP], [-1.6, -1.2, '清掃', PED_TOP], [-6, -6, '記録']]); } });
   for (let k = 0; k < 3; k++) {
     const nm = ['下段', '中段', '上段'][k], s = sections[k];
     const base = { date: k < 2 ? '2026-10-30' : '2026-10-31', stage: '建方', src: SRC_W + '（10/30〜31 タワー建て込み・ナセル取付）／クレーン作業計画書', cam: [[-52, -18, 36], [2, 4, 14]] };
@@ -1070,15 +1089,21 @@ S({ date: '2026-10-29', stage: '建方', t: '250t クレーン組立・電気設
         if (t > 0.12 && t < 0.95) { const out = p.clone().sub(c250).setY(0).normalize(); tagTo(6, p.clone().addScaledVector(out, radiusAt(k * SEC_LEN) + 0.35).add(new THREE.Vector3(0, 0.25, 0)), out, 8); }   // 下端の外側の吊りピースから
         setCrew([[-6, -6, '合図'], [2.4, 2.4, '据付', k === 0 ? PED_TOP : 0]]);
       } }));
-    S(Object.assign({}, base, { t: 'ボルト締付け・玉掛け外し', d: '仮締め後に玉掛けを外す（本締めは別途）', dur: 3,
-      run(t) { keep(); setSectionStood(k); aimCrane(crane250, vlerp(new THREE.Vector3(0, PED_TOP + (k + 1) * SEC_LEN + 0.6, 0), rest250(), ease(t)), 9); aimCrane(crane100, rest100(c100), 4); underLoad.visible = false; } }));
+    const TQ = [['アンカーナット', 'M36×52 本', '920→1,380→1,840N・m', '1,840N・m'], ['下段と中段のボルト', 'M36×48 本', '920→1,380→1,840N・m', '1,840N・m'], ['中段と上段のボルト', 'M30×44 本', '736→1,104→1,472N・m', '1,472N・m']][k];
+    S(Object.assign({}, base, { t: nm + 'タワー ボルト締付け・玉掛け外し', d: (k === 0 ? 'アンカーボルトに MoS2 グリスを塗り、' : 'フランジ接合部に防水接着剤を塗り、') + TQ[0] + 'を対角の順に規定トルクの 50%・75%・100% で 3 回締める' + num('（' + TQ[1] + '・' + TQ[2] + '）') + '。玉掛けを外したあと、同じ順で' + num(' ' + TQ[3] + ' で') + ' 2 回締めてマーキング', src: SRC_M + ' 4.2・6.3.4・6.3.7', dur: 6,
+      run(t) { keep(); setSectionStood(k); aimCrane(crane250, vlerp(new THREE.Vector3(0, PED_TOP + (k + 1) * SEC_LEN + 0.6, 0), rest250(), ease(seg(t, 0.4, 1))), 9); aimCrane(crane100, rest100(c100), 4); underLoad.visible = false;
+        const fy = PED_TOP + k * SEC_LEN; mark(new THREE.Vector3(0, fy + 0.05, 0), radiusAt(k * SEC_LEN) + 0.25, t);
+        setCrew([[0.5, 0.3, '締付', fy + 0.1], [-0.5, -0.3, '締付', fy + 0.1], [-6, -6, '合図']]); } }));
+    if (k === 2) S(Object.assign({}, base, { t: '安全ロープの取付・頂部の防雨', d: 'タワー内の梯子に安全ロープ（墜落防止器つき）を張り、ターンバックルで張りを調整。ナセルをすぐ載せない場合はタワー頂部を雨から養生する', src: SRC_M + ' 6.3.7・6.3.8', dur: 5,
+      run(t) { keep(); setSectionStood(2); aimCrane(crane250, rest250(), 4); aimCrane(crane100, rest100(c100), 4); underLoad.visible = false; mark(new THREE.Vector3(0, TOWER_TOP + 0.05, 0), R_TOP + 0.25, t);
+        setCrew([[0.3, 0.3, '安全ロープ', TOWER_TOP - 1.2], [-0.3, -0.3, '安全ロープ', PED_TOP + 0.1], [-6, -6, '合図']]); } }));
   }
   const nb = { date: '2026-10-31', stage: '建方', src: SRC_W + '（ナセル取付）／クレーン作業計画書', cam: [[-56, -14, 42], [2, 4, 20]] };
   // ナセルはハブが 250t 側を向くとブームに当たるので、吊り上げ中は介錯ロープでハブを南（+b）へ振っておき、据えてからヨー旋回で東へ戻す
   const LIFT_YAW = -Math.atan2(V.z, V.x);
   const nacHook = () => nac.g.localToWorld(new THREE.Vector3(0.8, 4.6, 0));
   const nacTail = () => nac.g.localToWorld(new THREE.Vector3(-2.6, 1.5, 0));
-  S(Object.assign({}, nb, { t: 'ナセル 玉掛け・巻き上げ・旋回', d: 'タワー頂部（地上約35.8m）の上まで巻き上げて旋回。介錯ロープでハブの向きを 250t のブームから外す', dur: 14,
+  S(Object.assign({}, nb, { t: 'ナセル 玉掛け・巻き上げ・旋回', d: 'ナセル吊上治具で玉掛けし、約 1m 吊って輸送用ブラケットを外し、位置決めボルトを取付・ヨーリングを清掃してグリースを塗る。タワー頂部（地上約35.8m）の上まで巻き上げて旋回。介錯ロープでハブの向きを 250t のブームから外す', dur: 14,
     run(t) { keep(); setNacelleYard(); const N0 = nac.g.position.clone();
       const up = seg(t, 0.15, 0.55), sw = seg(t, 0.55, 1);
       const p = N0.clone(); p.y = lerp(N0.y, TOWER_TOP + 1.5, ease(up));
@@ -1089,11 +1114,14 @@ S({ date: '2026-10-29', stage: '建方', t: '250t クレーン組立・電気設
         aimCrane(crane250, nacHook(), 14); showUnder(q, 3.5); tagTo(6, nacTail(), q.clone().sub(c250).add(new THREE.Vector3(-0.001, 0, 0.001)), 10);
       }
       setCrew([[-6, -6, '合図'], [8, 13, '玉掛']]); } }));
-  S(Object.assign({}, nb, { t: 'ナセル 据付・ヨー旋回', d: 'ヨー軸受けをタワー頂部のフランジに合わせてボルト締付け。玉掛けを外してブームを退避させてから、ヨー旋回でハブを東へ向ける', dur: 7,
+  S(Object.assign({}, nb, { t: 'ナセル 据付・ヨー旋回', d: 'ヨー軸受けをタワー頂部のフランジに合わせ、すき間をゼロまで下げてボルトを 3 回で締める' + num('（M24×40 本）') + '。玉掛けを外してブームを退避させてから、ヨー旋回でハブを東へ向ける。主軸ブレーキ・ロック装置・ヨー減衰器はロック状態', dur: 7,
     run(t) { keep(); const y = lerp(TOWER_TOP + 1.5, TOWER_TOP, ease(seg(t, 0, 0.55))); nac.g.visible = true; nac.g.position.set(0, y, 0);
       nac.g.rotation.set(0, lerp(LIFT_YAW, NAC_YAW, ease(seg(t, 0.8, 1))), 0);
       aimCrane(crane250, t < 0.6 ? nacHook() : vlerp(nacHook(), rest250(), ease(seg(t, 0.6, 0.8))), 14); if (t < 0.6) showUnder(nac.g.position, 3.5); else underLoad.visible = false;
       if (t < 0.5) tagTo(6, nacTail(), nacTail().sub(new THREE.Vector3(0, nacTail().y, 0)).setY(0).normalize(), 10); } }));
+  S(Object.assign({}, nb, { t: 'ナセル内の接続（冷却・ケーブル）', d: '発電機と放熱器の冷却線路を接続して冷却液（グリコール）を注入' + num('（40L）') + '。ケーブルにカバーを付けてナセルシャーシの吊り点へ掛け、塔上制御盤の配線をつなぐ。ヨーリングを清掃・グリース、ロック装置を点検', src: SRC_M + ' 6.4.4・6.5・6.6.1・6.6.2', dur: 6,
+    run(t) { keep(); setNacelleTop(); aimCrane(crane250, rest250(), 4); aimCrane(crane100, rest100(C100()), 4); underLoad.visible = false; mark(new THREE.Vector3(0, TOWER_TOP + 0.1, 0), 3.2, t);
+      setCrew([[0.4, 0.2, '冷却配管', TOWER_TOP + 0.3], [-0.4, -0.2, '配線', TOWER_TOP + 0.3], [-6, -6, '連絡']]); } }));
 }
 S({ date: '2026-10-31', stage: '建方', t: '250t クレーン解体・搬出', d: 'ブームを格納し、アウトリガーを畳んで退場', src: SRC_W, dur: 10, cam: [[-36, 30, 34], [-4, 6, 10]],
   run(t) { setNacelleTop(); underLoad.visible = false; placeCrane(crane100, L.crane100a, true, true); aimCrane(crane100, rest100(C100()), 4);
@@ -1145,6 +1173,9 @@ S({ date: '2026-10-31', stage: '建方', t: '250t クレーン解体・搬出', 
       parkAerialBoom();
       setCrew([[-30, 17, 'ゲート誘導員'], [-12, 10, '玉掛']]);
     } });
+  S({ date: '2026-11月', stage: 'ブレード', t: 'ブレード 地上準備', d: 'ブレード受けの上で水平に置き、ブレードボルト・アース線・カーボンブラシを取付。差し込みやすいよう 2〜3 本のボルトを少し長めに出し、ブレードとハブの零度マークを確認', src: SRC_M + ' 6.4.2', assume: true, dur: 6, cam: [[-30, 24, 12], [-15, 13, 1]],
+    run(t) { underLoad.visible = false; [0, 1, 2].forEach(setBladeYard);
+      setCrew([[-17.2, 15.6, 'ボルト'], [-15.2, 15.6, 'アース線'], [-13.2, 15.6, 'ボルト'], [-12, 10, '確認']]); } });
   const BLADE_SWING = +(new URLSearchParams(location.search).get('bs') || -1);   // 旋回の向き（タワー側を通らない向き）
   for (let i = 0; i < 3; i++) {
     const holdOff = 6.5;
@@ -1181,7 +1212,7 @@ S({ date: '2026-10-31', stage: '建方', t: '250t クレーン解体・搬出', 
         if (t > 0.12) { tagTo(6, b.position.clone(), U.clone().negate(), 9); tagTo(7, b.position.clone().add(axis.clone().multiplyScalar(BLADE_LEN - 0.5)), V, 7); }
         setCrew([[-14, 3, '介錯'], [-12, 10, '介錯'], [-6, -6, '合図']]);
       } }));
-    S(Object.assign({}, base, { t: (i + 1) + '枚目 ブレード 取付', d: '高所作業車の作業床から翼根ボルトをハブに合わせて締付け', dur: 6,
+    S(Object.assign({}, base, { t: (i + 1) + '枚目 ブレード 取付', d: '高所作業車の作業床から、ブレードの零度線をハブ軸受の零度線に合わせ、長めのボルトから全数を同時に差し込む。ナットを 3 回で締め' + num('（M24×32 本・368→552→736N・m）') + '、アース線とカーボンブラシをナセルに接続して防雨カバーを付ける', dur: 7,
       run(t) {
         const c = prep(), b = blades[i];
         b.quaternion.copy(c.qG); const axis = new THREE.Vector3(0, 1, 0).applyQuaternion(b.quaternion);
@@ -1191,7 +1222,7 @@ S({ date: '2026-10-31', stage: '建方', t: '250t クレーン解体・搬出', 
         if (t < 0.95) tagTo(7, root.clone().add(axis.clone().multiplyScalar(BLADE_LEN - 0.5)), V, 7);
         if (t >= 1) attachBladeToHub(i);
       } }));
-    S(Object.assign({}, base, { t: i < 2 ? 'ロータを 120° 回して次の取付面へ' : '玉掛け外し', d: i < 2 ? '次の取付面を水平（100t 側）に向ける' : '100t の玉掛けを外す', dur: i < 2 ? 5 : 3,
+    S(Object.assign({}, base, { t: i < 2 ? 'ロータを 120° 回して次の取付面へ' : '玉掛け外し', d: i < 2 ? '玉掛けを外して 100t を退避させてから、ロックピンを抜いてロータを回し、次の取付面を水平（100t 側）に向けて再びロック' : '100t の玉掛けを外し、緩めたあと同じ順で 2 回締め直してマーキング', dur: i < 2 ? 5 : 3,
       run(t) {
         prep(); for (let j = 0; j <= i; j++) attachBladeToHub(j);
         // 先に 100t の玉掛けを外してブームを退避させ、それからロータを回す
@@ -1201,6 +1232,16 @@ S({ date: '2026-10-31', stage: '建方', t: '250t クレーン解体・搬出', 
         aimAerial(hubSide(hubW())); underLoad.visible = false;
       } }));
   }
+  const fin = { date: '2026-11月', stage: '仕上げ', assume: true, cam: [[-30, -20, 16], [0, 0, 8]] };
+  S(Object.assign({}, fin, { t: 'ハブカバー・ブレード根元の防雨カバー', d: '高所作業車からハブカバー（中に入って点検できる）と翼根の防雨カバーを取り付け、すき間に防水処理', src: SRC_M + ' 6.4.3', cam: [[-30, 10, 34], [0, 6, 36]], dur: 6,
+    run(t) { underLoad.visible = false; setNacelleTop(); for (let j = 0; j < 3; j++) attachBladeToHub(j); placeCrane(crane100, L.crane100b, false, false); aimCrane(crane100, rest100(C100B()), 4); placeAerial(); aimAerial(hubSide(hubW()));
+      mark(hubW(), 1.6, t); setCrew([[-6, -6, '合図']]); } }));
+  S(Object.assign({}, fin, { t: 'ケーブル敷設', d: 'ケーブル用梯子にタワーケーブルを敷き、タワーの底まで 2m ごとにクレモナ等で結束。電力ケーブルと制御ケーブルは 15cm 以上離す（セパレータがある場合を除く）。接地線を接続', src: SRC_M + ' 6.6.3', dur: 6,
+    run(t) { underLoad.visible = false; placeAerial(); parkAerialBoom(); mark(new THREE.Vector3(0, PED_TOP + 0.05, 0), R_BASE + 0.25, t);
+      setCrew([[0.3, 0.4, 'ケーブル', PED_TOP + 0.1], [-0.3, -0.4, '結束', PED_TOP + 6], [-4, -3, '接地線']]); } }));
+  S(Object.assign({}, fin, { t: '下段作業台・タワードアの組立', d: 'ケーブル敷設の後、下段の作業台をケーブル用梯子の向きに合わせて取り付ける。最後にタワードアのヒンジを蝶番に差し込む', src: SRC_M + ' 6.6.4・6.6.5', dur: 5,
+    run(t) { underLoad.visible = false; mark(new THREE.Vector3(0, PED_TOP + 0.05, 0), R_BASE + 0.25, t);
+      setCrew([[0.3, 0.3, '作業台', PED_TOP + 0.1], [-2.6, 0.8, 'ドア'], [-6, -6, '確認']]); } }));
   S({ date: '完成', stage: '完成', t: '風車 完成', d: '高所作業車・100t が退場し、ロータが回る（システム容量 330kW）', src: '週間工程表（システム容量）', dur: 14, cam: [[-64, -20, 30], [0, 0, 20]],
     run(t) {
       setNacelleTop(); for (let j = 0; j < 3; j++) attachBladeToHub(j);
